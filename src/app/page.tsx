@@ -37,7 +37,10 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setArticle(null);
-
+    if (query.trim() === "") {
+      setLoading(false);
+      return;
+    }
     // Track search in localStorage
     const lastSearches = JSON.parse(localStorage.getItem("last-searches") || "[]");
     lastSearches.unshift(query);
