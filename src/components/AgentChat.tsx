@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
@@ -25,7 +25,12 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [conversationId, setConversationId] = useState<string>("");
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,6 +39,65 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onerror = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    }
+  }, []);
+
+  const startRecording = () => {
+    if (recognitionRef.current && !isRecording) {
+      setIsRecording(true);
+      recognitionRef.current.start();
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const playAudio = (audioBase64: string) => {
+    if (!voiceEnabled) return;
+    
+    try {
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
+        { type: "audio/mpeg" }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.play();
+    } catch (error) {
+      console.error("Error playing audio:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +122,8 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
           articleContext: {
             title: articleTitle,
             text: articleText,
-            summary: articleText.substring(0, 500),
           },
+          conversationId,
         }),
       });
 
@@ -76,6 +140,12 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
       };
 
       setMessages((prev) => [...prev, agentMessage]);
+      setConversationId(data.conversationId);
+
+      // Play audio response if voice is enabled
+      if (data.audio && voiceEnabled) {
+        playAudio(data.audio);
+      }
     } catch (error) {
       const errorMessage: Message = {
         role: "agent",
@@ -92,8 +162,19 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     <div className="flex flex-col h-[500px] bg-[#F0F0F0]">
       {/* Header */}
       <div className="encarta-window-titlebar">
-        <span className="encarta-window-title">🤖 AI Assistant</span>
+        <span className="encarta-window-title">🤖 AI Voice Assistant</span>
         <div className="flex items-center gap-2 text-xs text-white px-2">
+          <button
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            className="flex items-center gap-1 hover:bg-white/20 px-2 py-1 rounded"
+            title={voiceEnabled ? "Disable voice" : "Enable voice"}
+          >
+            {voiceEnabled ? (
+              <Volume2 className="w-3 h-3" />
+            ) : (
+              <VolumeX className="w-3 h-3" />
+            )}
+          </button>
           <span className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             Online
@@ -172,9 +253,9 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask me anything about this article..."
+              placeholder={isRecording ? "Listening..." : "Ask me anything or click the mic..."}
               className="w-full px-3 py-2 text-sm bg-white"
-              disabled={loading}
+              disabled={loading || isRecording}
               style={{
                 borderTop: "2px solid #808080",
                 borderLeft: "2px solid #808080",
@@ -184,6 +265,17 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
               }}
             />
           </div>
+          <button
+            type="button"
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={loading}
+            className={`encarta-button px-3 flex items-center gap-2 ${
+              isRecording ? "bg-red-500 text-white" : ""
+            }`}
+            title={isRecording ? "Stop recording" : "Start voice input"}
+          >
+            <Mic className={`w-4 h-4 ${isRecording ? "animate-pulse" : ""}`} />
+          </button>
           <button
             type="submit"
             disabled={loading || !input.trim()}
