@@ -64,7 +64,6 @@ Return ONLY a JSON array of 5 objects with this structure:
 
 Do not include any markdown, explanations, or text outside the JSON array.`;
 
-<<<<<<< HEAD
     // Use Gemini with model fallback
     const candidateModels = [
       "gemini-1.5-flash-latest",
@@ -84,14 +83,7 @@ Do not include any markdown, explanations, or text outside the JSON array.`;
         // try next
       }
     }
-=======
-    // Use Gemini model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
-    
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
->>>>>>> efecb4d (Fix Gemini model name: use gemini-pro instead of gemini-1.5-flash)
+
 
     // Parse AI response
     const recommendations = JSON.parse(text.trim());

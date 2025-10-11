@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -7,6 +6,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 export async function POST(request: NextRequest) {
   try {
     const { message, articleContext, conversationId } = await request.json();
+
+    console.log("[Agent] Processing message:", message);
+    console.log("[Agent] Article context:", articleContext?.title || "None");
 
     if (!message) {
       return NextResponse.json(
@@ -19,53 +21,95 @@ export async function POST(request: NextRequest) {
     const geminiKey = process.env.GEMINI_API_KEY;
 
     if (!elevenLabsKey || !geminiKey) {
+      console.error("[Agent] Missing API keys");
       return NextResponse.json(
         { error: "API keys missing" },
         { status: 500 }
       );
     }
 
-    // Use Gemini to generate intelligent response
+    // Use Gemini to generate intelligent response with model fallback
     let responseText = "";
-    
     if (articleContext) {
-      const prompt = `You are a helpful financial education assistant. You're helping a user understand an article titled "${articleContext.title}".
+      const articleExcerpt = articleContext.text.substring(0, 3000);
+      const prompt = `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
 
-Article context (first 1000 characters):
-${articleContext.text.substring(0, 1000)}
+ARTICLE CONTEXT:
+${articleExcerpt}
 
-User's question: ${message}
+USER QUESTION: ${message}
 
-Provide a clear, helpful answer based on the article context. Keep your response conversational and under 3 sentences. If the question can't be fully answered from the article, acknowledge that and provide what information you can.`;
+INSTRUCTIONS:
+- Answer based on the article content above
+- Be conversational, warm, and encouraging
+- Keep response under 4 sentences for natural speech
+- If the article doesn't cover it, say so briefly and offer what you know
+- Use simple language appropriate for someone learning about finance
+- Don't use markdown or special formatting
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      responseText = response.text().trim();
+Answer naturally as if speaking to a friend:`;
+
+      const candidateModels = [
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro",
+      ];
+
+      let generated = false;
+      for (const modelName of candidateModels) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          responseText = response.text().trim();
+          generated = true;
+          console.log(`[Agent] Gemini response via ${modelName}:`, responseText.substring(0, 100) + "...");
+          break;
+        } catch (err) {
+          console.warn(`[Agent] Model ${modelName} failed, trying next...`);
+        }
+      }
+
+      if (!generated) {
+        // Graceful fallback if Gemini is unavailable
+        const fallback = articleExcerpt
+          .replace(/\s+/g, ' ')
+          .split(/(?<=[.!?])\s/)
+          .slice(0, 2)
+          .join(' ');
+        responseText = fallback
+          ? `Quick take: ${fallback}`
+          : "I'm having trouble reaching the AI right now, but I can still help with high-level guidance.";
+      }
+
+      responseText = responseText.replace(/\*\*/g, '').replace(/\*/g, '').replace(/#/g, '');
     } else {
       responseText = "I'm here to help you understand this financial topic. What would you like to know?";
     }
 
-    const client = new ElevenLabsClient({ apiKey: elevenLabsKey });
-
-    // Use text-to-speech to generate voice response
-    const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // George voice - clear and professional
-    
-    // Generate audio response
-    const audioStream = await client.textToSpeech.convert({
-      voice_id: voiceId,
-      text: responseText,
-      model_id: "eleven_multilingual_v2",
-      output_format: "mp3_44100_128",
+    // Text-to-speech using ElevenLabs REST API to avoid SDK issues
+    const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // George
+    const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: "POST",
+      headers: {
+        "xi-api-key": elevenLabsKey,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+      },
+      body: JSON.stringify({
+        text: responseText,
+        model_id: "eleven_multilingual_v2",
+        output_format: "mp3_44100_128",
+      }),
     });
 
-    // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    if (!ttsRes.ok) {
+      console.error("[Agent] ElevenLabs TTS error:", await ttsRes.text());
     }
-    const audioBuffer = Buffer.concat(chunks);
-    const audioBase64 = audioBuffer.toString('base64');
+    const audioArrayBuffer = await ttsRes.arrayBuffer();
+    const audioBase64 = Buffer.from(audioArrayBuffer).toString("base64");
+
+    console.log("[Agent] Response generated successfully with audio");
 
     return NextResponse.json({
       response: responseText,
@@ -73,7 +117,7 @@ Provide a clear, helpful answer based on the article context. Keep your response
       conversationId: conversationId || `conv_${Date.now()}`,
     });
   } catch (error) {
-    console.error("Agent API error:", error);
+    console.error("[Agent] API error:", error);
     return NextResponse.json(
       { error: "Failed to process request" },
       { status: 500 }

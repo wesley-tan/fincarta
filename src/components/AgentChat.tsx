@@ -19,7 +19,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "agent",
-      content: `Hi! I'm your AI assistant for this article about ${articleTitle}. Ask me anything!`,
+      content: `Hi! I'm your AI assistant for this article about ${articleTitle}. I can answer any questions you have about the content. Just ask me anything, or use the microphone to speak your question!`,
       timestamp: new Date(),
     },
   ]);
@@ -28,9 +28,11 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const [isRecording, setIsRecording] = useState(false);
   const [conversationId, setConversationId] = useState<string>("");
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
+  const hasPlayedGreeting = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,6 +41,33 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Play greeting voice on load
+  useEffect(() => {
+    if (!hasPlayedGreeting.current && voiceEnabled) {
+      hasPlayedGreeting.current = true;
+      playGreeting();
+    }
+  }, [voiceEnabled]);
+
+  const playGreeting = async () => {
+    try {
+      const response = await fetch("/api/agent/greeting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ articleTitle }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.audio) {
+          playAudio(data.audio);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to play greeting:", error);
+    }
+  };
 
   // Initialize speech recognition
   useEffect(() => {
@@ -93,9 +122,16 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
       }
       
       audioRef.current = new Audio(audioUrl);
+      
+      // Set speaking state
+      setIsSpeaking(true);
+      audioRef.current.onended = () => setIsSpeaking(false);
+      audioRef.current.onerror = () => setIsSpeaking(false);
+      
       audioRef.current.play();
     } catch (error) {
       console.error("Error playing audio:", error);
+      setIsSpeaking(false);
     }
   };
 
@@ -176,8 +212,8 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
             )}
           </button>
           <span className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            Online
+            <div className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-blue-400' : 'bg-green-400'} animate-pulse`} />
+            {isSpeaking ? "Speaking..." : "Online"}
           </span>
         </div>
       </div>
