@@ -16,6 +16,8 @@ interface ArticleData {
   sections: string[];
   relatedLinks: string[];
   externalLinks: string[];
+  isFinanceRelated?: boolean;
+  financeMessage?: string;
 }
 
 export default function Home() {
@@ -158,7 +160,46 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
+                className="space-y-4"
               >
+                {/* Finance Relevance Warning */}
+                {article.isFinanceRelated === false && (
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="encarta-window max-w-4xl mx-auto"
+                  >
+                    <div className="encarta-window-titlebar bg-yellow-600">
+                      <span className="encarta-window-title">⚠️ NON-FINANCE TOPIC DETECTED</span>
+                      <div className="encarta-window-controls">
+                        <div className="encarta-window-btn">_</div>
+                        <div className="encarta-window-btn">□</div>
+                        <div className="encarta-window-btn">×</div>
+                      </div>
+                    </div>
+                    <div className="p-6 bg-yellow-50 border-2 border-yellow-400">
+                      <div className="flex items-start gap-4">
+                        <div className="text-4xl">💡</div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg text-gray-900 mb-2">
+                            FinCarta specializes in financial education
+                          </h3>
+                          <p className="text-sm text-gray-700 mb-3">
+                            <strong>Note:</strong> {article.financeMessage || "This topic may not be directly related to finance, investing, or money management."}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            💡 <strong>Tip:</strong> For the best FinCarta experience, try searching for topics like: 
+                            <span className="font-semibold"> Investing, Stocks, Budgeting, Retirement Planning, Cryptocurrency, Real Estate, Personal Finance, or Tax Planning</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="encarta-status-bar">
+                      <div className="encarta-status-panel">⚠️ Content shown for reference only</div>
+                    </div>
+                  </motion.div>
+                )}
+                
                 <ArticleDisplay article={article} onNewSearch={handleSearch} />
               </motion.div>
             )}
