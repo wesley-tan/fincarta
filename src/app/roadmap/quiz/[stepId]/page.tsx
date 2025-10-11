@@ -53,8 +53,9 @@ export default function QuizPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          content: `Generate 5 multiple choice questions about ${stepInfo.topic} for personal finance education. Include questions about key concepts, best practices, and common mistakes to avoid.`,
-          numQuestions: 5 
+          text: `Generate 5 multiple choice questions about ${stepInfo.topic} for personal finance education. Include questions about key concepts, best practices, and common mistakes to avoid.`,
+          numQuestions: 5, 
+          title: stepInfo.title
         }),
       });
 
