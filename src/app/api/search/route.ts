@@ -127,7 +127,7 @@ Non-finance topics include: history, science, sports, entertainment, technology 
     searchUrl.searchParams.set("action", "query");
     searchUrl.searchParams.set("format", "json");
     searchUrl.searchParams.set("list", "search");
-    searchUrl.searchParams.set("srsearch", query);
+    searchUrl.searchParams.set("srsearch", query + " finance");
     searchUrl.searchParams.set("origin", "*");
 
     const searchResponse = await fetch(searchUrl.toString());
