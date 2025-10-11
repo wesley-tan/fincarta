@@ -16,6 +16,7 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
   const [ageLevel, setAgeLevel] = useState<number>(2);
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [summaries, setSummaries] = useState<{ [key: number]: string }>({1: '', 2: '', 3: ''});
 
   const ageLevels = {
     1: { label: "Begginer", emoji: "👶", description: "Simple & Fun" },
@@ -25,6 +26,11 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
 
   const fetchSummary = async (level: number) => {
     setLoading(true);
+    if (summaries[level]) {
+      setSummary(summaries[level]);
+      setLoading(false);
+      return;
+    }
     try {
       const response = await fetch("/api/summarize", {
         method: "POST",
@@ -35,6 +41,7 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
       if (response.ok) {
         const data = await response.json();
         setSummary(data.summary);
+        setSummaries(prev => ({...prev, [level]: data.summary}));
       }
     } catch (error) {
       console.error("Failed to fetch summary:", error);
