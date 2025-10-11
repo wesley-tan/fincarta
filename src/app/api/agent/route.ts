@@ -50,6 +50,7 @@ INSTRUCTIONS:
 Answer naturally as if speaking to a friend:`;
 
       const candidateModels = [
+        "gemini-1.5-flash-latest",
         "gemini-1.5-flash",
         "gemini-1.5-pro",
         "gemini-pro",

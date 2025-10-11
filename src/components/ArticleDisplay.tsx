@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-<<<<<<< HEAD
 import { BookOpen, Brain, Network, ShieldCheck, ArrowLeft, Bot } from "lucide-react";
-=======
-import { BookOpen, Brain, Network, ShieldCheck, ArrowLeft, Bot } from "lucide-react";
->>>>>>> 29e561b (Add ElevenLabs AI Agent integration for article Q&A)
 import SummaryPanel from "./SummaryPanel";
 import TrustMeter from "./TrustMeter";
 import AgentChat from "./AgentChat";
