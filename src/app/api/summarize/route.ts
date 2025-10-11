@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 =======
     // Use Gemini to generate summary
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const summaryText = response.text();

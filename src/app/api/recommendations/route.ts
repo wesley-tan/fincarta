@@ -86,7 +86,7 @@ Do not include any markdown, explanations, or text outside the JSON array.`;
     }
 =======
     // Use Gemini model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
     
     const result = await model.generateContent(prompt);
     const response = await result.response;

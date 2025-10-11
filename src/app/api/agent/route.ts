@@ -38,7 +38,7 @@ User's question: ${message}
 
 Provide a clear, helpful answer based on the article context. Keep your response conversational and under 3 sentences. If the question can't be fully answered from the article, acknowledge that and provide what information you can.`;
 
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       responseText = response.text().trim();
