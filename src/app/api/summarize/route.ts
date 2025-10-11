@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         prompt = `Summarize this financial text concisely in 5 sentences:\n\n${text.substring(0, 1000)}`;
     }
 
+<<<<<<< HEAD
     // Use Gemini to generate summary with model fallback
     const candidateModels = [
       "gemini-1.5-flash-latest",
@@ -61,6 +62,13 @@ export async function POST(request: NextRequest) {
       const sentences = excerpt.split(/(?<=[.!?])\s/).slice(0, 3).join(' ');
       summaryText = sentences || excerpt || "Summary temporarily unavailable.";
     }
+=======
+    // Use Gemini to generate summary
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const summaryText = response.text();
+>>>>>>> efecb4d (Fix Gemini model name: use gemini-pro instead of gemini-1.5-flash)
 
     return NextResponse.json({
       summary: prefix + summaryText.trim(),
