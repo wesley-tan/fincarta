@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,38 +15,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.ELEVENLABS_API_KEY;
+    const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
 
-    if (!apiKey) {
+    if (!elevenLabsKey || !geminiKey) {
       return NextResponse.json(
-        { error: "ElevenLabs API key missing" },
+        { error: "API keys missing" },
         { status: 500 }
       );
     }
 
-    const client = new ElevenLabsClient({ apiKey });
-
-    // Generate a conversational response (using simple logic for now)
-    // In production, you'd use a proper LLM here
+    // Use Gemini to generate intelligent response
     let responseText = "";
     
     if (articleContext) {
-      const articleTitle = articleContext.title;
-      const questionLower = message.toLowerCase();
-      
-      // Simple pattern matching for common questions
-      if (questionLower.includes("what is") || questionLower.includes("explain")) {
-        responseText = `Based on the article about ${articleTitle}, let me explain. ${articleContext.text.substring(0, 200)}... Would you like me to elaborate on any specific aspect?`;
-      } else if (questionLower.includes("how") || questionLower.includes("work")) {
-        responseText = `Great question about ${articleTitle}! ${articleContext.text.substring(0, 200)}... Feel free to ask for more details about any part.`;
-      } else if (questionLower.includes("why") || questionLower.includes("benefit")) {
-        responseText = `That's an important question regarding ${articleTitle}. ${articleContext.text.substring(0, 200)}... Would you like to know more?`;
-      } else {
-        responseText = `Regarding your question about ${articleTitle}: ${articleContext.text.substring(0, 250)}... Ask me anything else you'd like to know!`;
-      }
+      const prompt = `You are a helpful financial education assistant. You're helping a user understand an article titled "${articleContext.title}".
+
+Article context (first 1000 characters):
+${articleContext.text.substring(0, 1000)}
+
+User's question: ${message}
+
+Provide a clear, helpful answer based on the article context. Keep your response conversational and under 3 sentences. If the question can't be fully answered from the article, acknowledge that and provide what information you can.`;
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      responseText = response.text().trim();
     } else {
       responseText = "I'm here to help you understand this financial topic. What would you like to know?";
     }
+
+    const client = new ElevenLabsClient({ apiKey: elevenLabsKey });
 
     // Use text-to-speech to generate voice response
     const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // George voice - clear and professional

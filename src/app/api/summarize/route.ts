@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,28 +16,54 @@ export async function POST(request: NextRequest) {
 
     // Create age-appropriate prompt
     let prompt = "";
+    let prefix = "";
+    
     switch (ageLevel) {
-      case 1:
-        prompt = `Explain this topic in simple, fun language for a 12-year-old. Use everyday examples and avoid complex jargon:\n\n${text}`;
+      case 12:
+        prefix = "🎯 In simple terms: ";
+        prompt = `Explain this financial topic in simple, fun language for a beginner (12-year-old level). Use everyday examples and avoid complex jargon. Keep it to 3-4 sentences:\n\n${text.substring(0, 1000)}`;
         break;
-      case 2:
-        prompt = `Explain this topic clearly for a college student. Include key concepts and context:\n\n${text}`;
+      case 20:
+        prefix = "📚 College level: ";
+        prompt = `Explain this financial topic clearly for a college student. Include key concepts and context. Keep it to 5-6 sentences:\n\n${text.substring(0, 1000)}`;
         break;
-      case 3:
-        prompt = `Provide a comprehensive, professional explanation of this topic with nuanced details:\n\n${text}`;
+      case 40:
+        prefix = "🎓 Professional summary: ";
+        prompt = `Provide a comprehensive, professional summary of this financial topic with nuanced details. Keep it to 7-8 sentences:\n\n${text.substring(0, 1000)}`;
         break;
       default:
-        prompt = `Summarize this text concisely:\n\n${text}`;
+        prefix = "";
+        prompt = `Summarize this financial text concisely in 5 sentences:\n\n${text.substring(0, 1000)}`;
     }
 
-    // Use OpenAI-compatible endpoint (placeholder for now)
-    // In production, you'd use actual OpenAI API or other LLM service
-    
-    // For demo purposes, create a mock summary based on age level
-    const mockSummary = generateMockSummary(text, ageLevel);
+    // Use Gemini to generate summary with model fallback
+    const candidateModels = [
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash",
+      "gemini-pro",
+    ];
+
+    let summaryText = "";
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        summaryText = response.text();
+        break;
+      } catch (err) {
+        // try next
+      }
+    }
+
+    if (!summaryText) {
+      const excerpt = text.substring(0, 600).replace(/\s+/g, ' ');
+      const sentences = excerpt.split(/(?<=[.!?])\s/).slice(0, 3).join(' ');
+      summaryText = sentences || excerpt || "Summary temporarily unavailable.";
+    }
 
     return NextResponse.json({
-      summary: mockSummary,
+      summary: prefix + summaryText.trim(),
       ageLevel,
     });
   } catch (error) {
@@ -44,23 +73,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function generateMockSummary(text: string, ageLevel: number): string {
-  // Simple mock implementation - extract first few sentences
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const numSentences = ageLevel === 12 ? 3 : ageLevel === 20 ? 5 : 7;
-  
-  let summary = sentences.slice(0, numSentences).join(". ") + ".";
-  
-  // Add age-appropriate prefix
-  if (ageLevel === 1) {
-    summary = "🎯 In simple terms: " + summary;
-  } else if (ageLevel === 2) {
-    summary = "📚 College level: " + summary;
-  } else {
-    summary = "🎓 Professional summary: " + summary;
-  }
-  
-  return summary;
 }

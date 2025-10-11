@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 interface ProgressData {
   stepId: string;
@@ -65,16 +64,25 @@ Return ONLY a JSON array of 5 objects with this structure:
 
 Do not include any markdown, explanations, or text outside the JSON array.`;
 
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: 1500,
-        temperature: 0.7,
-      },
-    });
+    // Use Gemini with model fallback
+    const candidateModels = [
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash",
+      "gemini-pro",
+    ];
 
-    const response = result.response;
-    const text = response.text();
+    let text = "";
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        text = response.text();
+        break;
+      } catch (err) {
+        // try next
+      }
+    }
 
     // Parse AI response
     const recommendations = JSON.parse(text.trim());
