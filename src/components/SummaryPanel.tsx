@@ -57,8 +57,10 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
 
   const handleAgeLevelChange = (values: number[]) => {
     const newLevel = getNearestAgeLevel(values[0]);
-    setAgeLevel(newLevel);
-    fetchSummary(newLevel);
+    if (newLevel !== ageLevel) {
+      setAgeLevel(newLevel);
+      fetchSummary(newLevel);
+    }
   };
 
   const currentLevel = ageLevels[ageLevel as keyof typeof ageLevels];
