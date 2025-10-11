@@ -115,7 +115,7 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
 
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
           <p className="text-sm text-muted-foreground">
-            💡 <strong>TL;DR:</strong> This is a {ageLevel}-year-old level explanation of <strong>{title}</strong>.
+            💡 <strong>TL;DR:</strong> This is a {currentLevel.label} level explanation of <strong>{title}</strong>.
             Adjust the slider above to see it explained differently!
           </p>
         </div>

@@ -14,13 +14,13 @@ export async function POST(request: NextRequest) {
     // Create age-appropriate prompt
     let prompt = "";
     switch (ageLevel) {
-      case 12:
+      case 1:
         prompt = `Explain this topic in simple, fun language for a 12-year-old. Use everyday examples and avoid complex jargon:\n\n${text}`;
         break;
-      case 20:
+      case 2:
         prompt = `Explain this topic clearly for a college student. Include key concepts and context:\n\n${text}`;
         break;
-      case 40:
+      case 3:
         prompt = `Provide a comprehensive, professional explanation of this topic with nuanced details:\n\n${text}`;
         break;
       default:
@@ -54,9 +54,9 @@ function generateMockSummary(text: string, ageLevel: number): string {
   let summary = sentences.slice(0, numSentences).join(". ") + ".";
   
   // Add age-appropriate prefix
-  if (ageLevel === 12) {
+  if (ageLevel === 1) {
     summary = "🎯 In simple terms: " + summary;
-  } else if (ageLevel === 20) {
+  } else if (ageLevel === 2) {
     summary = "📚 College level: " + summary;
   } else {
     summary = "🎓 Professional summary: " + summary;
