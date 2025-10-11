@@ -235,6 +235,29 @@ function generateMockQuiz(text: string, title: string): QuizQuestion[] {
     selectedQuestions = quizBank["budgeting"];
   }
 
+  // Randomize the options for each question
+  const randomizedQuestions = selectedQuestions.map(q => {
+    const optionsWithIndex = q.options.map((option, index) => ({
+      option,
+      isCorrect: index === q.correctAnswer
+    }));
+    
+    // Shuffle options using Fisher-Yates algorithm
+    for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+    }
+    
+    // Find new correct answer index
+    const newCorrectAnswer = optionsWithIndex.findIndex(o => o.isCorrect);
+    
+    return {
+      ...q,
+      options: optionsWithIndex.map(o => o.option),
+      correctAnswer: newCorrectAnswer
+    };
+  });
+
   // Return 5 questions (or all available if less than 5)
-  return selectedQuestions.slice(0, Math.min(5, selectedQuestions.length));
+  return randomizedQuestions.slice(0, Math.min(5, randomizedQuestions.length));
 }
