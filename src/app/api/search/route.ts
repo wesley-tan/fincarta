@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // Wikipedia API base URL
 const WIKI_API = "https://en.wikipedia.org/w/api.php";
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +17,109 @@ export async function POST(request: NextRequest) {
         { error: "Query parameter is required" },
         { status: 400 }
       );
+    }
+
+    // Check if query is finance-related using Gemini
+    let isFinanceRelated = true;
+    let financeMessage = "";
+    
+    // Check if Gemini API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn("⚠️ GEMINI_API_KEY not found - finance validation disabled");
+    } else {
+      try {
+        console.log(`🔍 Validating query with Gemini: "${query}"`);
+        
+        const validationPrompt = `You are a finance topic validator for FinCarta, a financial education platform.
+
+Determine if the following search query is related to finance, economics, investing, personal finance, business, or money management.
+
+Search query: "${query}"
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "isFinanceRelated": true or false,
+  "message": "brief explanation (one sentence)"
+}
+
+Finance-related topics include: stocks, bonds, budgeting, investing, retirement, taxes, credit, debt, savings, banking, cryptocurrency, real estate investment, insurance, financial planning, accounting, economics, business finance, etc.
+
+Non-finance topics include: history, science, sports, entertainment, technology (unless fintech), politics (unless economic policy), geography, etc.`;
+
+        const result = await model.generateContent({
+          contents: [{ role: "user", parts: [{ text: validationPrompt }] }],
+          generationConfig: {
+            maxOutputTokens: 1000,
+            temperature: 0.3,
+          },
+          safetySettings: [
+            {
+              category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+              category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+              threshold: HarmBlockThreshold.BLOCK_NONE,
+            },
+          ],
+        });
+
+        // Check if response was blocked or empty
+        console.log("📦 Full result object:", JSON.stringify(result, null, 2));
+        
+        if (!result.response) {
+          console.error("❌ No response object from Gemini");
+          throw new Error("No response from Gemini");
+        }
+
+        // Check for prompt feedback (blocking)
+        if (result.response.promptFeedback?.blockReason) {
+          console.error("🚫 Response blocked:", result.response.promptFeedback.blockReason);
+          throw new Error(`Gemini blocked response: ${result.response.promptFeedback.blockReason}`);
+        }
+
+        // Try to get text from candidates if text() method fails
+        let responseText = "";
+        try {
+          responseText = result.response.text().trim();
+        } catch (textError) {
+          console.warn("⚠️ text() method failed, checking candidates manually");
+          const candidates = result.response.candidates;
+          if (candidates && candidates[0]?.content?.parts?.[0]?.text) {
+            responseText = candidates[0].content.parts[0].text.trim();
+          }
+        }
+        
+        console.log("📝 Gemini raw response:", responseText);
+        
+        if (!responseText) {
+          console.error("❌ Empty response text from Gemini");
+          console.log("Response candidates:", JSON.stringify(result.response.candidates, null, 2));
+          throw new Error("Empty response text from Gemini");
+        }
+        
+        // Remove markdown code blocks if present
+        const jsonText = responseText.replace(/```json\n?|\n?```/g, "").trim();
+        const validation = JSON.parse(jsonText);
+        
+        isFinanceRelated = validation.isFinanceRelated;
+        financeMessage = validation.message;
+        
+        console.log(`✅ Validation result: isFinanceRelated=${isFinanceRelated}, message="${financeMessage}"`);
+      } catch (geminiError) {
+        console.error("❌ Gemini validation error:", geminiError);
+        // If Gemini fails, default to allowing the search
+        isFinanceRelated = true;
+        financeMessage = "";
+      }
     }
 
     // Fetch Wikipedia article
@@ -68,6 +176,8 @@ export async function POST(request: NextRequest) {
       sections: sections.slice(0, 5), // First 5 sections
       relatedLinks,
       externalLinks,
+      isFinanceRelated,
+      financeMessage,
     });
   } catch (error) {
     console.error("Search API error:", error);

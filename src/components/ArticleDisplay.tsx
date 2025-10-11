@@ -15,6 +15,8 @@ interface ArticleData {
   sections: string[];
   relatedLinks: string[];
   externalLinks: string[];
+  isFinanceRelated?: boolean;
+  financeMessage?: string;
 }
 
 interface ArticleDisplayProps {
