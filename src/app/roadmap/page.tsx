@@ -23,7 +23,7 @@ export default function RoadmapPage() {
   };
 
   return (
-    <div className="min-h-screen encarta-bg relative overflow-hidden">
+    <div className="min-h-screen encarta-bg relative overflow-y-auto overflow-x-hidden">
       <BubbleBackground />
       
       <div className="relative z-10">
