@@ -13,21 +13,14 @@ interface SummaryPanelProps {
 }
 
 export default function SummaryPanel({ text, title }: SummaryPanelProps) {
-  const [ageLevel, setAgeLevel] = useState<number>(20);
+  const [ageLevel, setAgeLevel] = useState<number>(2);
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const ageLevels = {
-    12: { label: "Explain Like I'm 12", emoji: "👶", description: "Simple & Fun" },
-    20: { label: "College Level", emoji: "🎓", description: "Balanced & Clear" },
-    40: { label: "Professional", emoji: "👔", description: "Detailed & Nuanced" },
-  };
-
-  // Map any slider value to nearest valid age level
-  const getNearestAgeLevel = (value: number): 12 | 20 | 40 => {
-    if (value < 16) return 12;
-    if (value < 30) return 20;
-    return 40;
+    1: { label: "Begginer", emoji: "👶", description: "Simple & Fun" },
+    2: { label: "Intermediate", emoji: "🎓", description: "Balanced & Clear" },
+    3: { label: "Advanced", emoji: "👔", description: "Detailed & Nuanced" },
   };
 
   const fetchSummary = async (level: number) => {
@@ -56,7 +49,7 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
   }, []);
 
   const handleAgeLevelChange = (values: number[]) => {
-    const newLevel = getNearestAgeLevel(values[0]);
+    const newLevel = values[0];
     if (newLevel !== ageLevel) {
       setAgeLevel(newLevel);
       fetchSummary(newLevel);
@@ -82,15 +75,15 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
             <Slider
               value={[ageLevel]}
               onValueChange={handleAgeLevelChange}
-              min={12}
-              max={40}
+              min={1}
+              max={3}
               step={1}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>12 years</span>
-              <span>20 years</span>
-              <span>40 years</span>
+              <span>Begginer</span>
+              <span>Intermediate</span>
+              <span>Advanced</span>
             </div>
           </div>
 
