@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Brain, Network, ShieldCheck, ArrowLeft } from "lucide-react";
+import { BookOpen, Network, ShieldCheck, ArrowLeft } from "lucide-react";
 import SummaryPanel from "./SummaryPanel";
-import QuizPanel from "./QuizPanel";
 import ConceptGraph from "./ConceptGraph";
 import TrustMeter from "./TrustMeter";
 import { motion } from "framer-motion";
@@ -81,10 +80,6 @@ export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayP
                 <BookOpen className="w-3 h-3" />
                 AI Summary
               </TabsTrigger>
-              <TabsTrigger value="quiz" className="encarta-tab flex items-center gap-2">
-                <Brain className="w-3 h-3" />
-                MindMaze
-              </TabsTrigger>
               <TabsTrigger value="graph" className="encarta-tab flex items-center gap-2">
                 <Network className="w-3 h-3" />
                 Concept Map
@@ -99,10 +94,6 @@ export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayP
           <div className="p-6 bg-white">
             <TabsContent value="summary" className="mt-0">
               <SummaryPanel text={article.fullText} title={article.title} />
-            </TabsContent>
-
-            <TabsContent value="quiz" className="mt-0">
-              <QuizPanel text={article.fullText} title={article.title} />
             </TabsContent>
 
             <TabsContent value="graph" className="mt-0">
