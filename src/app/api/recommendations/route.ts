@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
 interface ProgressData {
   stepId: string;
@@ -66,24 +65,19 @@ Return ONLY a JSON array of 5 objects with this structure:
 
 Do not include any markdown, explanations, or text outside the JSON array.`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1500,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        maxOutputTokens: 1500,
+        temperature: 0.7,
+      },
     });
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type");
-    }
+    const response = result.response;
+    const text = response.text();
 
     // Parse AI response
-    const recommendations = JSON.parse(content.text.trim());
+    const recommendations = JSON.parse(text.trim());
 
     return NextResponse.json({
       recommendations,
