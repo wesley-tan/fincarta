@@ -53,11 +53,21 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const stopCurrentAudio = () => {
     if (audioRef.current) {
       try {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        // Remove event listeners to prevent them from firing
-        audioRef.current.onended = null;
-        audioRef.current.onerror = null;
+        const currentAudio = audioRef.current;
+
+        // Pause and reset
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+
+        // Remove all event listeners
+        currentAudio.onended = null;
+        currentAudio.onerror = null;
+        currentAudio.onplay = null;
+        currentAudio.onpause = null;
+
+        // Force stop by setting src to empty
+        currentAudio.src = "";
+        currentAudio.load();
       } catch (e) {
         console.error("Error stopping audio:", e);
       }
