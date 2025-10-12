@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Brain, Network, ShieldCheck, ArrowLeft, Bot } from "lucide-react";
+import { BookOpen, Brain, Network, ShieldCheck, ArrowLeft, Bot, Share2, Check } from "lucide-react";
 import SummaryPanel from "./SummaryPanel";
 import TrustMeter from "./TrustMeter";
 import AgentChat from "./AgentChat";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ArticleData {
   title: string;
@@ -26,6 +26,38 @@ interface ArticleDisplayProps {
 
 export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayProps) {
   const [activeTab, setActiveTab] = useState("summary");
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/?search=${encodeURIComponent(article.title)}`;
+    const shareData = {
+      title: `${article.title} - FinCarta`,
+      text: `Check out this financial topic on FinCarta: ${article.title}`,
+      url: shareUrl,
+    };
+
+    // Try native share API first (mobile/modern browsers)
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        // User cancelled or error - fall through to clipboard
+        if ((err as Error).name !== 'AbortError') {
+          console.log('Share failed, falling back to clipboard');
+        }
+      }
+    }
+
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
@@ -50,13 +82,52 @@ export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayP
               Wikipedia Article • {article.fullText.length} characters • {article.sections.length} sections
             </p>
           </div>
-          <button
-            onClick={() => onNewSearch("")}
-            className="encarta-button flex items-center gap-2"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            New Search
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={handleShare}
+                className="encarta-button flex items-center gap-2"
+                title="Share this article"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-3 h-3" />
+                    Share
+                  </>
+                )}
+              </button>
+              <AnimatePresence>
+                {copied && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#000080] text-white text-xs px-3 py-1 rounded whitespace-nowrap z-10"
+                    style={{
+                      borderTop: "2px solid #FFFFFF",
+                      borderLeft: "2px solid #FFFFFF",
+                      borderRight: "2px solid #808080",
+                      borderBottom: "2px solid #808080",
+                    }}
+                  >
+                    Link copied to clipboard!
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <button
+              onClick={() => onNewSearch("")}
+              className="encarta-button flex items-center gap-2"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              New Search
+            </button>
+          </div>
         </div>
         <div className="encarta-status-bar">
           <div className="encarta-status-panel">Article loaded</div>
