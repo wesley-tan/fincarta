@@ -209,8 +209,8 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
             <span className="encarta-window-title">✨ YOUR PERSONALIZED PATH</span>
           </div>
           <div className="p-8 bg-white text-center">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 text-purple-600 animate-pulse" />
-            <p className="text-sm text-gray-600">Loading your recommendations...</p>
+            <Sparkles className="w-12 h-12 mx-auto mb-4 text-[#0066CC] animate-pulse" />
+            <p className="text-sm text-black">Loading your recommendations...</p>
           </div>
         </div>
       </div>
@@ -229,14 +229,14 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
 
         <div className="p-6 bg-white">
           {/* Header */}
-          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300">
+          <div className="mb-6 p-4 bg-[#DFDFDF] border-2 border-[#808080]">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
+              <Sparkles className="w-6 h-6 text-[#0066CC] flex-shrink-0 mt-1" />
               <div>
-                <h3 className="font-bold text-base mb-2 text-gray-900">
+                <h3 className="font-bold text-base mb-2 text-black">
                   Recommended Articles for You
                 </h3>
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-black">
                   Based on your goal{goal && ` to ${goalTitles[goal]?.toLowerCase()}`}, we've selected these articles to help you get started.
                 </p>
               </div>
@@ -263,10 +263,10 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
                     </span>
                   </div>
                   <div className="p-4 bg-white">
-                    <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    <p className="text-sm text-black mb-3 leading-relaxed">
                       {article.description}
                     </p>
-                    <div className="flex items-center gap-2 text-xs font-bold text-blue-600">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#0066CC]">
                       <BookOpen className="w-4 h-4" />
                       Click to Read Article →
                     </div>
@@ -277,8 +277,8 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
           </div>
 
           {/* Footer */}
-          <div className="mt-6 p-4 bg-gray-50 border-2 border-gray-300 text-center">
-            <p className="text-sm text-gray-700">
+          <div className="mt-6 p-4 bg-[#DFDFDF] border-2 border-[#808080] text-center">
+            <p className="text-sm text-black">
               💡 <strong>Tip:</strong> Click any article to start learning. Each article will open with full AI assistant support!
             </p>
           </div>
