@@ -5,12 +5,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, articleContext, conversationId } = await request.json();
-
-    console.log("[Agent] Processing message:", message);
+    const { messages, articleContext, conversationId } = await request.json();
+    console.log("[Agent] Processing message:", messages[messages.length - 1]?.content || "No messages");
     console.log("[Agent] Article context:", articleContext?.title || "None");
 
-    if (!message) {
+    if (!messages) {
       return NextResponse.json(
         { error: "Message is required" },
         { status: 400 }
@@ -34,10 +33,13 @@ export async function POST(request: NextRequest) {
       const articleExcerpt = articleContext.text.substring(0, 3000);
       const prompt = `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
 
-ARTICLE CONTEXT:
+CHAT CONTEXT:
 ${articleExcerpt}
 
-USER QUESTION: ${message}
+${messages.reduce((acc: string, msg: any) => {
+  const role = msg.role === "user" ? "User" : "Assistant";
+  return acc + `\n${role}: ${msg.content}`;
+}, "")}
 
 INSTRUCTIONS:
 - Answer based on the article content above
