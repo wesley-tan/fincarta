@@ -157,6 +157,7 @@ Non-finance topics include: history, science, sports, entertainment, technology 
     contentUrl.searchParams.set("explaintext", "1");
     contentUrl.searchParams.set("exsectionformat", "plain");
     contentUrl.searchParams.set("pllimit", "20");
+    contentUrl.searchParams.set("ellimit", "max"); // Get all external links for full transparency
     contentUrl.searchParams.set("origin", "*");
 
     const contentResponse = await fetch(contentUrl.toString());
@@ -194,8 +195,8 @@ Non-finance topics include: history, science, sports, entertainment, technology 
     // Get related links
     const relatedLinks = page.links?.slice(0, 10).map((link: any) => link.title) || [];
     
-    // Get external links
-    const externalLinks = page.extlinks?.slice(0, 5).map((link: any) => link["*"]) || [];
+    // Get external links (all of them for full transparency)
+    const externalLinks = page.extlinks?.map((link: any) => link["*"]) || [];
 
     return NextResponse.json({
       title: pageTitle,
