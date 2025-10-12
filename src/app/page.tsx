@@ -8,7 +8,7 @@ import SearchBar from "@/components/SearchBar";
 import CDRomLoader from "@/components/CDRomLoader";
 import ArticleDisplay from "@/components/ArticleDisplay";
 import { motion, AnimatePresence } from "framer-motion";
-import AccountBox from "@/components/AccountBox";
+// import AccountBox from "@/components/AccountBox";
 
 interface ArticleData {
   title: string;
@@ -109,7 +109,7 @@ function HomeContent() {
 
         {/* Main Content */}
         <main className="container mx-auto px-4 pb-16">
-        <AccountBox />
+        {/* <AccountBox /> */}
           <AnimatePresence mode="wait">
             {!article && !loading && (
               <motion.div
