@@ -5,8 +5,13 @@ import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "FinCarta - Look it up fast. Learn it for good.",
-  description: "Encyclopedia-style answers when you need them, plus a Duolingo-style roadmap with quizzes that adapt to you.",
+  title: "FinCarta - Encyclopedia-Style Financial Education",
+  description: "Master personal finance with encyclopedia-style articles and interactive quizzes. Learn budgeting, investing, and retirement planning that actually sticks.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -16,6 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
+      </head>
       <body className="antialiased">
         <ErrorReporter />
         <Script

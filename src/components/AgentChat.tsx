@@ -401,6 +401,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     try {
       const requestBody: any = {
         message: currentInput || "Analyze the uploaded content in the context of the article.",
+        messages: [...messages, userMessage], // Include conversation history
         articleContext: {
           title: articleTitle,
           text: articleText,

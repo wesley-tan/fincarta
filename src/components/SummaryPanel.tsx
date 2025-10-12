@@ -117,7 +117,16 @@ export default function SummaryPanel({ text, title, pageId }: SummaryPanelProps)
             animate={{ opacity: 1, y: 0 }}
             className="prose dark:prose-invert max-w-none"
           >
-            <p className="text-base leading-relaxed">{summary}</p>
+            <div 
+              className="text-base leading-relaxed"
+              dangerouslySetInnerHTML={{ 
+                __html: summary
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                  .replace(/\n\n/g, '</p><p>')
+                  .replace(/^(.*)$/, '<p>$1</p>')
+              }}
+            />
           </motion.div>
         )}
 

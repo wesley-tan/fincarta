@@ -14,14 +14,17 @@ interface QuizQuestion {
 }
 
 const STEP_INFO: Record<string, { title: string; topic: string }> = {
-  "step-0": { title: "Budget & Set Goals", topic: "budgeting and financial goals" },
-  "step-1": { title: "Emergency Fund", topic: "emergency fund and savings" },
-  "step-2": { title: "Employer Match", topic: "401k employer matching" },
-  "step-3": { title: "Pay Down Debt", topic: "debt payoff strategies" },
-  "step-4": { title: "IRA Contributions", topic: "IRA retirement accounts" },
-  "step-5": { title: "Max Out Retirement", topic: "retirement savings strategies" },
-  "step-6": { title: "Other Financial Goals", topic: "HSA and 529 savings plans" },
-  "step-advanced": { title: "Advanced Strategies", topic: "backdoor Roth IRA strategies" },
+  "step-0": { title: "Budget & Cash Flow", topic: "budgeting and cash flow management" },
+  "step-1": { title: "Build Emergency Fund", topic: "emergency fund and savings" },
+  "step-2": { title: "Eliminate High-Interest Debt", topic: "debt payoff strategies" },
+  "step-3": { title: "Employer 401(k) Match", topic: "401k employer matching" },
+  "step-4": { title: "Individual Retirement Accounts", topic: "IRA retirement accounts" },
+  "step-5": { title: "Insurance & Risk Protection", topic: "insurance and risk management" },
+  "step-6": { title: "Maximize Retirement Savings", topic: "retirement savings strategies" },
+  "step-7": { title: "Tax-Advantaged Accounts", topic: "HSA and 529 plans" },
+  "step-8": { title: "Major Financial Goals", topic: "mortgages and home buying" },
+  "step-9": { title: "Estate Planning Basics", topic: "estate planning and wills" },
+  "step-advanced": { title: "Advanced Tax Optimization", topic: "backdoor Roth IRA and tax strategies" },
 };
 
 export default function QuizPage() {
@@ -105,7 +108,7 @@ export default function QuizPage() {
     const stars = Math.ceil((score / questions.length) * 3);
     
     progress[stepId] = {
-      completed: score >= questions.length * 0.8, // 80% pass rate
+      completed: score === questions.length, // Perfect score required (3/3)
       stars: stars,
       articlesRead: progress[stepId]?.articlesRead || [],
     };
@@ -295,9 +298,9 @@ export default function QuizPage() {
                 <Trophy className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
                 
                 <h2 className="text-2xl font-bold mb-2">
-                  {score >= questions.length * 0.8
-                    ? "Excellent Work!"
-                    : score >= questions.length * 0.6
+                  {score === questions.length
+                    ? "Perfect! 🎯"
+                    : score >= Math.ceil(questions.length * 0.67)
                     ? "Good Job!"
                     : "Keep Learning!"}
                 </h2>
@@ -324,10 +327,16 @@ export default function QuizPage() {
                 </div>
 
                 {/* Pass/Fail Message */}
-                {score >= questions.length * 0.6 ? (
+                {score === questions.length ? (
                   <div className="mb-6 p-4 bg-green-50 border-2 border-green-500">
                     <p className="text-sm font-bold text-green-800">
-                      ✅ Step Completed! You've unlocked the next step.
+                      ✅ Perfect Score! You've unlocked the next step.
+                    </p>
+                  </div>
+                ) : score >= Math.ceil(questions.length * 0.67) ? (
+                  <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-500">
+                    <p className="text-sm font-bold text-blue-800">
+                      📖 Good effort! Score 3/3 to unlock the next step.
                     </p>
                   </div>
                 ) : (

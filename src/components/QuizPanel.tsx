@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,26 @@ export default function QuizPanel({ text, title }: QuizPanelProps) {
   useEffect(() => {
     fetchQuiz();
   }, []);
+
+  useEffect(() => {
+  if (!quizComplete) return;
+
+  const saveProgress = async () => {
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+
+    if (!user) return;
+
+    await supabase.from("quiz_progress").insert({
+    user_id: user.id,
+    quiz_id: title,
+    score,
+    completed_at: new Date().toISOString(),
+    });
+  };
+
+  saveProgress();
+}, [quizComplete]);
 
   const fetchQuiz = async () => {
     setLoading(true);
