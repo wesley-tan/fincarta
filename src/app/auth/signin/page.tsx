@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 
 export default function SignInPage() {
   const router = useRouter()
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, isConfigured } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -60,6 +60,20 @@ export default function SignInPage() {
             {isSignUp ? 'Create your account' : 'Sign in to continue'}
           </p>
         </div>
+
+        {!isConfigured && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-4 p-4 rounded-lg text-sm bg-yellow-100 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-200 border-2 border-yellow-400"
+          >
+            <p className="font-bold mb-1">⚠️ Authentication Not Configured</p>
+            <p className="text-xs">
+              Supabase environment variables are not set. Authentication features are disabled.
+              Please configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your deployment settings.
+            </p>
+          </motion.div>
+        )}
 
         {error && (
           <motion.div
