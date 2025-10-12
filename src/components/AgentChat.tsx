@@ -200,7 +200,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: input.trim(),
+          messages: [...messages, userMessage],
           articleContext: {
             title: articleTitle,
             text: articleText,
