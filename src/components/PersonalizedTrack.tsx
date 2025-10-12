@@ -51,7 +51,14 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Profile doesn't exist - this is expected for new users
+        if (error.code === 'PGRST116') {
+          console.log('No profile found - user needs onboarding');
+          return;
+        }
+        throw error;
+      }
       setProfile(data);
     } catch (err: any) {
       console.error('Error loading profile:', err);
@@ -74,8 +81,20 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
       if (data && data.length > 0) {
         setSteps(data);
       } else {
-        // No steps yet, generate them
-        await generateRoadmap();
+        // No steps yet - check if profile exists before generating
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('primary_goal')
+          .eq('id', userId)
+          .single();
+
+        if (profileData && profileData.primary_goal) {
+          // Profile exists, generate roadmap
+          await generateRoadmap();
+        } else {
+          // No profile - user needs to complete onboarding first
+          console.log('No profile found - onboarding required');
+        }
       }
     } catch (err: any) {
       console.error('Error loading steps:', err);
