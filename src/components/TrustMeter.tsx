@@ -21,9 +21,11 @@ interface TrustMeterProps {
 export default function TrustMeter({ links }: TrustMeterProps) {
   const [analysis, setAnalysis] = useState<TrustAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [displayCount, setDisplayCount] = useState(10); // Show 10 sources initially
 
   useEffect(() => {
     fetchTrustScores();
+    setDisplayCount(10); // Reset display count when new links are fetched
   }, [links]);
 
   const fetchTrustScores = async () => {
@@ -99,13 +101,31 @@ export default function TrustMeter({ links }: TrustMeterProps) {
 
   return (
     <div className="space-y-6">
+      {/* Source Origin Explanation */}
+      <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="space-y-2">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+              📚 Source Analysis: Wikipedia External Links
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              We analyze <strong>all external URLs from the Wikipedia article</strong>, including citation references, 
+              external resources, and related links. Wikipedia's editorial process requires that articles link to 
+              verifiable and reliable sources. Our Trust Meter evaluates each link's credibility based on domain 
+              authority, security, and publisher reputation.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       {/* Overall Score */}
       <Card className="p-6 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950 dark:to-green-950">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold mb-1">Overall Trust Score</h3>
             <p className="text-sm text-muted-foreground">
-              Based on {analysis.length} external source{analysis.length !== 1 ? "s" : ""}
+              Based on {analysis.length} external link{analysis.length !== 1 ? "s" : ""} from Wikipedia article
             </p>
           </div>
           <div className="text-center">
@@ -123,14 +143,21 @@ export default function TrustMeter({ links }: TrustMeterProps) {
 
       {/* Individual Sources */}
       <div className="space-y-4">
-        <h3 className="text-xl font-bold">Source Analysis</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold">Source Analysis</h3>
+          {analysis.length > 10 && (
+            <p className="text-sm text-muted-foreground">
+              Showing {Math.min(displayCount, analysis.length)} of {analysis.length} sources
+            </p>
+          )}
+        </div>
         
-        {analysis.map((item, index) => (
+        {analysis.slice(0, displayCount).map((item, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
+            transition={{ delay: Math.min(index * 0.05, 0.5) }} // Cap delay for better UX with many items
           >
             <Card className={cn("p-4 border-l-4", getReliabilityColor(item.reliability))}>
               <div className="flex items-start justify-between gap-4">
@@ -177,23 +204,116 @@ export default function TrustMeter({ links }: TrustMeterProps) {
             </Card>
           </motion.div>
         ))}
+
+        {/* Show More Button */}
+        {displayCount < analysis.length && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center pt-4"
+          >
+            <button
+              onClick={() => setDisplayCount(prev => Math.min(prev + 10, analysis.length))}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
+            >
+              Show More Sources ({analysis.length - displayCount} remaining)
+            </button>
+          </motion.div>
+        )}
+
+        {/* Show Less Button (when expanded) */}
+        {displayCount > 10 && displayCount >= analysis.length && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center pt-4"
+          >
+            <button
+              onClick={() => setDisplayCount(10)}
+              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
+            >
+              Show Less
+            </button>
+          </motion.div>
+        )}
       </div>
 
-      {/* Legend */}
-      <Card className="p-4 bg-muted/50">
-        <h4 className="font-semibold mb-3 text-sm">How We Calculate Trust Scores:</h4>
-        <div className="grid gap-2 text-sm">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="w-4 h-4 text-green-600 mt-0.5" />
-            <span><strong>High (70-100):</strong> Educational, government, or established sources</span>
+      {/* Detailed Methodology */}
+      <Card className="p-6 bg-muted/50">
+        <h4 className="font-bold mb-4 text-lg flex items-center gap-2">
+          🔍 Trust Score Methodology
+        </h4>
+        
+        <div className="space-y-4 text-sm">
+          {/* Scoring Criteria */}
+          <div>
+            <h5 className="font-semibold mb-2 text-base">Scoring Criteria (Starting from 50 points):</h5>
+            <div className="grid gap-2 ml-2">
+              <div className="flex items-start gap-2">
+                <span className="font-mono text-green-600">+30</span>
+                <span><strong>Domain Authority:</strong> .edu (educational), .gov (government), .org (non-profit) domains indicate institutional backing</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-mono text-green-600">+20</span>
+                <span><strong>Reference Source:</strong> Established encyclopedias with editorial oversight (Wikipedia, Britannica)</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-mono text-green-600">+15</span>
+                <span><strong>Reputable Publisher:</strong> Known news organizations, peer-reviewed journals, established financial publications</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-mono text-green-600">+10</span>
+                <span><strong>Transport Security:</strong> HTTPS encryption ensures data integrity and authenticity</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-mono text-green-600">+5</span>
+                <span><strong>URL Structure:</strong> Deep links to specific content vs. generic homepage</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
-            <span><strong>Medium (50-69):</strong> General websites with HTTPS and standard verification</span>
+
+          {/* Reliability Levels */}
+          <div>
+            <h5 className="font-semibold mb-2 text-base">Reliability Levels:</h5>
+            <div className="grid gap-2">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-green-600 mt-0.5" />
+                <span><strong>High (70-100):</strong> Multiple positive indicators—institutional domain, encryption, reputable publisher</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                <span><strong>Medium (50-69):</strong> Standard commercial sources with basic security measures</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <XCircle className="w-4 h-4 text-red-600 mt-0.5" />
+                <span><strong>Low (&lt;50):</strong> Limited verification, lack of security, or unrecognized sources</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-start gap-2">
-            <XCircle className="w-4 h-4 text-red-600 mt-0.5" />
-            <span><strong>Low (&lt;50):</strong> Unverified or questionable sources</span>
+
+          {/* Limitations */}
+          <div className="pt-3 border-t border-gray-300">
+            <h5 className="font-semibold mb-2 text-base text-orange-700 dark:text-orange-400">
+              ⚠️ Important Limitations:
+            </h5>
+            <ul className="space-y-1 ml-2 text-muted-foreground list-disc list-inside">
+              <li><strong>URL-based analysis only:</strong> We analyze domain patterns and structure, not the actual content</li>
+              <li><strong>No content verification:</strong> A high score doesn't guarantee accuracy of the specific article</li>
+              <li><strong>Heuristic approach:</strong> Scoring uses established trust patterns, not real-time fact-checking</li>
+              <li><strong>Includes all external links:</strong> Analysis covers citations, external resources, and supplementary links from the Wikipedia page</li>
+              <li><strong>Wikipedia curation:</strong> All links went through Wikipedia's editorial review process</li>
+            </ul>
+          </div>
+
+          {/* Best Practice */}
+          <div className="pt-3 border-t border-gray-300 bg-green-50 dark:bg-green-950 p-3 rounded-lg">
+            <h5 className="font-semibold mb-1 text-green-800 dark:text-green-200">
+              💡 Best Practice:
+            </h5>
+            <p className="text-green-700 dark:text-green-300">
+              Always cross-reference information from multiple sources, especially for financial decisions. 
+              Use this tool as a starting point for evaluating source credibility, not as the final word.
+            </p>
           </div>
         </div>
       </Card>
