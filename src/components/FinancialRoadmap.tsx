@@ -186,58 +186,6 @@ export default function FinancialRoadmap() {
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8">
-      {/* Roadmap Track Selector */}
-      <div className="encarta-window mb-6">
-        <div className="encarta-window-titlebar">
-          <span className="encarta-window-title">📚 Learning Tracks</span>
-        </div>
-        <div className="p-4 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Active: Personal Finance */}
-            <div className="border-4 border-blue-600 bg-blue-50 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                  💰
-                </div>
-                <h3 className="font-bold text-sm">Personal Finance</h3>
-              </div>
-              <p className="text-xs text-gray-600 mb-2">Master budgeting, debt, retirement, and wealth building</p>
-              <div className="inline-block px-2 py-1 bg-blue-600 text-white text-xs font-bold">
-                ✓ ACTIVE TRACK
-              </div>
-            </div>
-
-            {/* Coming Soon: Investments */}
-            <div className="border-2 border-gray-300 bg-gray-50 p-4 opacity-60">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-gray-400 flex items-center justify-center text-white font-bold text-sm">
-                  📈
-                </div>
-                <h3 className="font-bold text-sm text-gray-600">Investments</h3>
-              </div>
-              <p className="text-xs text-gray-500 mb-2">Stocks, bonds, ETFs, portfolios, and asset allocation</p>
-              <div className="inline-block px-2 py-1 bg-yellow-500 text-white text-xs font-bold">
-                🔒 COMING SOON
-              </div>
-            </div>
-
-            {/* Coming Soon: Cryptocurrency */}
-            <div className="border-2 border-gray-300 bg-gray-50 p-4 opacity-60">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 bg-gray-400 flex items-center justify-center text-white font-bold text-sm">
-                  ₿
-                </div>
-                <h3 className="font-bold text-sm text-gray-600">Cryptocurrency</h3>
-              </div>
-              <p className="text-xs text-gray-500 mb-2">Bitcoin, blockchain, DeFi, and digital asset investing</p>
-              <div className="inline-block px-2 py-1 bg-yellow-500 text-white text-xs font-bold">
-                🔒 COMING SOON
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Progress Header */}
       <div className="encarta-window mb-8">
         <div className="encarta-window-titlebar">
