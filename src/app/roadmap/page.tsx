@@ -279,8 +279,19 @@ export default function RoadmapPage() {
             </div>
 
             {/* Render appropriate track */}
-            {activeTrack === "personalized" && user ? (
+            {activeTrack === "personalized" && user && !needsOnboarding ? (
               <PersonalizedTrack userId={user.id} />
+            ) : activeTrack === "personalized" && needsOnboarding ? (
+              // Show placeholder while onboarding modal is displayed
+              <div className="encarta-window max-w-4xl mx-auto">
+                <div className="encarta-window-titlebar">
+                  <span className="encarta-window-title">✨ MY PERSONALIZED PATH</span>
+                </div>
+                <div className="p-8 bg-white text-center">
+                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-purple-600" />
+                  <p className="text-sm text-gray-600">Complete the quick onboarding to generate your personalized roadmap...</p>
+                </div>
+              </div>
             ) : (
               <FinancialRoadmap />
             )}
