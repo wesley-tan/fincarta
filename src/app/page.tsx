@@ -7,6 +7,7 @@ import BubbleBackground from "@/components/BubbleBackground";
 import SearchBar from "@/components/SearchBar";
 import CDRomLoader from "@/components/CDRomLoader";
 import ArticleDisplay from "@/components/ArticleDisplay";
+import UserProfile from "@/components/UserProfile";
 import { motion, AnimatePresence } from "framer-motion";
 // import AccountBox from "@/components/AccountBox";
 
@@ -84,10 +85,16 @@ function HomeContent() {
         {/* Header with Navigation */}
         <header className="pt-8 pb-6 px-4">
           <div className="container mx-auto">
-            <div className="flex justify-center mb-6">
-              <EncartaLogo handleSearch={handleSearch} />
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex-1"></div>
+              <div className="flex justify-center flex-1">
+                <EncartaLogo handleSearch={handleSearch} />
+              </div>
+              <div className="flex-1 flex justify-end">
+                <UserProfile />
+              </div>
             </div>
-            
+
             {/* Navigation Tabs */}
             <div className="flex justify-center gap-2">
               <button
