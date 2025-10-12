@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  // Removed outputFileTracingRoot - not needed for single-repo projects
   typescript: {
     ignoreBuildErrors: true,
   },

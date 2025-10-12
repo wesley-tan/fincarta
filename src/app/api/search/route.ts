@@ -122,7 +122,9 @@ Non-finance topics include: history, science, sports, entertainment, technology 
       }
     }
 
-    // Fetch Wikipedia article
+    // Use Wikipedia's search engine directly - it's smart and handles edge cases
+    console.log(`🔍 Searching Wikipedia for: "${query}"`);
+    
     const searchUrl = new URL(WIKI_API);
     searchUrl.searchParams.set("action", "query");
     searchUrl.searchParams.set("format", "json");
@@ -134,14 +136,17 @@ Non-finance topics include: history, science, sports, entertainment, technology 
     const searchData = await searchResponse.json();
 
     if (!searchData.query?.search?.[0]) {
+      console.error(`❌ No search results found for "${query}"`);
       return NextResponse.json(
         { error: "No results found" },
         { status: 404 }
       );
     }
 
+    // Get the best match from search results
     const pageTitle = searchData.query.search[0].title;
     const pageId = searchData.query.search[0].pageid;
+    console.log(`📄 Found article: "${pageTitle}" (ID: ${pageId})`);
 
     // Fetch full article content
     const contentUrl = new URL(WIKI_API);
@@ -157,8 +162,31 @@ Non-finance topics include: history, science, sports, entertainment, technology 
     const contentResponse = await fetch(contentUrl.toString());
     const contentData = await contentResponse.json();
 
-    const page = contentData.query.pages[pageId];
+    // Handle both string and number keys
+    let page = contentData.query?.pages?.[pageId.toString()];
+    if (!page) {
+      page = contentData.query?.pages?.[pageId];
+    }
+
+    if (!page) {
+      console.error(`❌ Failed to fetch content for page ID: ${pageId}`);
+      return NextResponse.json(
+        { error: "Failed to fetch article content" },
+        { status: 500 }
+      );
+    }
+
     const fullText = page.extract || "";
+    
+    if (!fullText) {
+      console.error(`❌ Empty content for article: "${pageTitle}"`);
+      return NextResponse.json(
+        { error: "Article has no content" },
+        { status: 500 }
+      );
+    }
+    
+    console.log(`✅ Successfully loaded: "${pageTitle}" (${fullText.length} chars)`);
     
     // Split into sections (simple approach)
     const sections = fullText.split("\n\n\n").filter((s: string) => s.trim().length > 0);
