@@ -30,7 +30,7 @@ function HomeContent() {
   // Handle search from URL params (when coming from roadmap)
   useEffect(() => {
     const searchQuery = searchParams.get('search');
-    if (searchQuery) {
+    if (searchQuery && searchQuery.trim() !== '') {
       handleSearch(searchQuery);
     }
   }, [searchParams]);
