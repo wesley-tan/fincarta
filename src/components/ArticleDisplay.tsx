@@ -95,7 +95,7 @@ export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayP
 
           <div className="p-6 bg-white">
             <TabsContent value="summary" className="mt-0">
-              <SummaryPanel text={article.fullText} title={article.title} />
+              <SummaryPanel text={article.fullText} title={article.title} pageId={article.pageId} />
             </TabsContent>
 
             <TabsContent value="trust" className="mt-0">

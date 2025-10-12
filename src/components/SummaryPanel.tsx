@@ -4,27 +4,34 @@ import { useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface SummaryPanelProps {
   text: string;
   title: string;
+  pageId?: number;
 }
 
-export default function SummaryPanel({ text, title }: SummaryPanelProps) {
+export default function SummaryPanel({ text, title, pageId }: SummaryPanelProps) {
   const [ageLevel, setAgeLevel] = useState<number>(2);
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [summaries, setSummaries] = useState<{ [key: number]: string }>({1: '', 2: '', 3: ''});
 
   const ageLevels = {
-    1: { label: "Begginer", emoji: "👶", description: "Simple & Fun" },
+    1: { label: "Beginner", emoji: "👶", description: "Simple & Fun" },
     2: { label: "Intermediate", emoji: "🎓", description: "Balanced & Clear" },
     3: { label: "Advanced", emoji: "👔", description: "Detailed & Nuanced" },
   };
 
   const fetchSummary = async (level: number) => {
     setLoading(true);
+    if (summaries[level]) {
+      setSummary(summaries[level]);
+      setLoading(false);
+      return;
+    }
     try {
       const response = await fetch("/api/summarize", {
         method: "POST",
@@ -35,6 +42,7 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
       if (response.ok) {
         const data = await response.json();
         setSummary(data.summary);
+        setSummaries(prev => ({...prev, [level]: data.summary}));
       }
     } catch (error) {
       console.error("Failed to fetch summary:", error);
@@ -81,7 +89,7 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Begginer</span>
+              <span>Beginner</span>
               <span>Intermediate</span>
               <span>Advanced</span>
             </div>
@@ -124,8 +132,24 @@ export default function SummaryPanel({ text, title }: SummaryPanelProps) {
       {/* Original Text Preview */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-3">Original Wikipedia Text (Preview)</h3>
-        <div className="text-sm text-muted-foreground leading-relaxed max-h-48 overflow-y-auto">
+        <div className="text-sm text-muted-foreground leading-relaxed max-h-48 overflow-y-auto mb-4">
           {text.slice(0, 800)}...
+        </div>
+        
+        {/* Wikipedia Citation Link */}
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <a
+            href={`https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-sm transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Read the full article on Wikipedia
+          </a>
+          <p className="text-xs text-muted-foreground mt-2">
+            📚 Source: Wikipedia - "{title}" {pageId && `(Page ID: ${pageId})`}
+          </p>
         </div>
       </Card>
     </div>
