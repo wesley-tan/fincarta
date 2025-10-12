@@ -177,7 +177,7 @@ function generateMockQuiz(text: string, title: string): QuizQuestion[] {
         explanation: "Balance transfer cards offer 0% APR periods (12-21 months) to help you pay down debt without accruing additional interest."
       }
     ],
-    "retirement": [
+    "ira": [
       {
         question: "What is an IRA?",
         options: [
@@ -201,15 +201,225 @@ function generateMockQuiz(text: string, title: string): QuizQuestion[] {
         explanation: "Traditional IRAs offer tax deductions now but you pay taxes in retirement, while Roth IRAs are funded with after-tax money but withdrawals are tax-free."
       },
       {
-        question: "Why is starting retirement savings early so important?",
+        question: "What is the annual IRA contribution limit for 2024?",
         options: [
-          "Compound interest has more time to work",
-          "Tax rates will definitely increase",
-          "Employers match more for younger workers",
-          "Investment fees are lower when you're young"
+          "$7,000 (or $8,000 if 50+)",
+          "$23,000",
+          "$5,000",
+          "No limit"
         ],
         correctAnswer: 0,
-        explanation: "Compound interest means your money earns returns, and those returns earn returns. Starting at 25 vs 35 can result in hundreds of thousands more by retirement."
+        explanation: "For 2024, you can contribute up to $7,000 to an IRA, or $8,000 if you're 50 or older (catch-up contribution)."
+      }
+    ],
+    "retirement": [
+      {
+        question: "What percentage of gross income should you aim to save for retirement?",
+        options: [
+          "15-20%",
+          "5-10%",
+          "30-40%",
+          "Whatever feels comfortable"
+        ],
+        correctAnswer: 0,
+        explanation: "Financial experts recommend saving 15-20% of your gross income for retirement to maintain your lifestyle in retirement."
+      },
+      {
+        question: "How does compound interest help retirement savings grow?",
+        options: [
+          "Your earnings generate their own earnings over time",
+          "The bank gives you extra interest each year",
+          "Your employer adds matching funds",
+          "Government tax credits accumulate"
+        ],
+        correctAnswer: 0,
+        explanation: "Compound interest means your investment returns earn returns themselves. Over decades, this compounding effect can turn small regular contributions into substantial retirement savings."
+      },
+      {
+        question: "What is a pension?",
+        options: [
+          "A retirement fund paid by an employer based on years of service",
+          "A government welfare program",
+          "A type of savings account",
+          "A short-term investment"
+        ],
+        correctAnswer: 0,
+        explanation: "A pension is a defined benefit retirement plan where employers pay retirees a set amount based on salary and years of service. They're less common today than 401(k)s."
+      }
+    ],
+    "insurance": [
+      {
+        question: "What is the primary purpose of term life insurance?",
+        options: [
+          "Provide income replacement if you die unexpectedly",
+          "Build cash value as an investment",
+          "Pay for medical expenses",
+          "Cover property damage"
+        ],
+        correctAnswer: 0,
+        explanation: "Term life insurance provides affordable death benefit protection for a specific period, ensuring your family has financial support if you pass away."
+      },
+      {
+        question: "Which type of insurance protects your income if you can't work due to injury?",
+        options: [
+          "Disability insurance",
+          "Health insurance",
+          "Life insurance",
+          "Unemployment insurance"
+        ],
+        correctAnswer: 0,
+        explanation: "Disability insurance replaces a portion of your income (typically 50-70%) if you become unable to work due to illness or injury."
+      },
+      {
+        question: "Why is health insurance considered essential financial protection?",
+        options: [
+          "Medical bills can bankrupt you without coverage",
+          "It's required by law in all states",
+          "It covers all types of insurance needs",
+          "It provides retirement income"
+        ],
+        correctAnswer: 0,
+        explanation: "Medical emergencies can cost hundreds of thousands of dollars. Health insurance protects you from catastrophic medical debt that could destroy your finances."
+      }
+    ],
+    "hsa": [
+      {
+        question: "What is a Health Savings Account (HSA)?",
+        options: [
+          "A tax-advantaged account for medical expenses",
+          "A type of health insurance plan",
+          "A government healthcare program",
+          "A medical credit card"
+        ],
+        correctAnswer: 0,
+        explanation: "An HSA is a triple-tax-advantaged account (tax-deductible contributions, tax-free growth, tax-free withdrawals for medical expenses) available with high-deductible health plans."
+      },
+      {
+        question: "What is a 529 plan primarily used for?",
+        options: [
+          "Saving for education expenses",
+          "Retirement savings",
+          "Emergency fund storage",
+          "Paying off student loans"
+        ],
+        correctAnswer: 0,
+        explanation: "529 plans are tax-advantaged savings plans designed specifically for future education costs, with tax-free growth when used for qualified education expenses."
+      },
+      {
+        question: "What makes HSAs unique compared to other retirement accounts?",
+        options: [
+          "Triple tax advantage (deduction, growth, and withdrawal)",
+          "Unlimited contribution amounts",
+          "Can be used for any expense after age 65",
+          "Employer matching is guaranteed"
+        ],
+        correctAnswer: 0,
+        explanation: "HSAs offer three tax benefits: tax-deductible contributions, tax-free investment growth, and tax-free withdrawals for medical expenses - making them even better than 401(k)s for healthcare savings."
+      }
+    ],
+    "mortgage": [
+      {
+        question: "What is a down payment on a house?",
+        options: [
+          "Upfront cash payment toward the purchase price",
+          "The first monthly mortgage payment",
+          "Closing costs and fees",
+          "Money held in escrow"
+        ],
+        correctAnswer: 0,
+        explanation: "A down payment is the initial cash payment you make when buying a home, typically 3-20% of the purchase price, which reduces the amount you need to borrow."
+      },
+      {
+        question: "What is PMI (Private Mortgage Insurance)?",
+        options: [
+          "Insurance required when you put down less than 20%",
+          "Protection against property damage",
+          "Coverage for mortgage payments if you lose your job",
+          "Insurance that pays off your mortgage if you die"
+        ],
+        correctAnswer: 0,
+        explanation: "PMI protects the lender if you default on your loan. It's required when your down payment is less than 20%, typically costing 0.5-1.5% of the loan annually."
+      },
+      {
+        question: "What is the general rule for how much house you can afford?",
+        options: [
+          "Housing costs should be no more than 28-30% of gross income",
+          "Buy the most expensive house the bank approves",
+          "Spend 50% of your income on housing",
+          "Your mortgage should equal your annual salary"
+        ],
+        correctAnswer: 0,
+        explanation: "Financial experts recommend keeping housing costs (mortgage, taxes, insurance) below 28-30% of your gross monthly income to maintain financial stability."
+      }
+    ],
+    "estate": [
+      {
+        question: "What is the primary purpose of a will?",
+        options: [
+          "Specify how your assets are distributed after death",
+          "Avoid paying taxes",
+          "Provide healthcare directives",
+          "Manage finances while you're alive"
+        ],
+        correctAnswer: 0,
+        explanation: "A will is a legal document that specifies who receives your assets after you die, names guardians for minor children, and designates an executor to manage your estate."
+      },
+      {
+        question: "What is a beneficiary designation?",
+        options: [
+          "Who receives assets from accounts when you die",
+          "Someone who inherits your debt",
+          "A person who manages your healthcare decisions",
+          "An executor of your will"
+        ],
+        correctAnswer: 0,
+        explanation: "Beneficiary designations on accounts like 401(k)s, IRAs, and life insurance override your will and directly pass assets to named individuals."
+      },
+      {
+        question: "What is a living trust?",
+        options: [
+          "A legal entity that holds assets and avoids probate",
+          "A type of life insurance policy",
+          "A retirement savings account",
+          "A healthcare directive"
+        ],
+        correctAnswer: 0,
+        explanation: "A living trust holds your assets during your lifetime and passes them to beneficiaries after death, avoiding the costly and time-consuming probate process."
+      }
+    ],
+    "tax": [
+      {
+        question: "What is a backdoor Roth IRA?",
+        options: [
+          "Converting Traditional IRA contributions to Roth",
+          "An illegal tax avoidance scheme",
+          "A type of 401(k) plan",
+          "A special account for high earners"
+        ],
+        correctAnswer: 0,
+        explanation: "A backdoor Roth IRA is a legal strategy where you contribute to a Traditional IRA (which has no income limits) and immediately convert it to a Roth IRA, allowing high earners to access Roth benefits."
+      },
+      {
+        question: "What are tax brackets?",
+        options: [
+          "Ranges of income taxed at different rates",
+          "The total tax rate you pay on all income",
+          "Deductions you can claim",
+          "Categories of tax forms"
+        ],
+        correctAnswer: 0,
+        explanation: "Tax brackets are progressive - only the income within each bracket is taxed at that rate. If you're in the 24% bracket, only the income in that range is taxed at 24%, not all your income."
+      },
+      {
+        question: "What is tax-loss harvesting?",
+        options: [
+          "Selling losing investments to offset capital gains taxes",
+          "Delaying income to a lower tax year",
+          "Maximizing retirement contributions",
+          "Claiming false deductions"
+        ],
+        correctAnswer: 0,
+        explanation: "Tax-loss harvesting involves selling investments at a loss to offset capital gains, reducing your tax bill while maintaining your investment strategy."
       }
     ]
   };
@@ -220,16 +430,29 @@ function generateMockQuiz(text: string, title: string): QuizQuestion[] {
   
   let selectedQuestions: QuizQuestion[] = [];
   
-  if (titleLower.includes("budget") || textLower.includes("budget")) {
+  // Match quiz questions to step content based on Wikipedia topics covered
+  if (titleLower.includes("budget") || titleLower.includes("cash flow") || textLower.includes("budget")) {
     selectedQuestions = quizBank["budgeting"];
-  } else if (titleLower.includes("emergency") || textLower.includes("emergency fund")) {
+  } else if (titleLower.includes("emergency") || titleLower.includes("build emergency") || textLower.includes("emergency fund")) {
     selectedQuestions = quizBank["emergency"];
-  } else if (titleLower.includes("401") || titleLower.includes("employer match") || textLower.includes("401k")) {
-    selectedQuestions = quizBank["401k"];
-  } else if (titleLower.includes("debt") || textLower.includes("pay down")) {
+  } else if (titleLower.includes("debt") || titleLower.includes("eliminate") || titleLower.includes("pay down")) {
     selectedQuestions = quizBank["debt"];
-  } else if (titleLower.includes("ira") || titleLower.includes("retirement") || textLower.includes("roth")) {
+  } else if (titleLower.includes("401") || titleLower.includes("employer") && titleLower.includes("match")) {
+    selectedQuestions = quizBank["401k"];
+  } else if (titleLower.includes("individual retirement") || (titleLower.includes("ira") && !titleLower.includes("backdoor"))) {
+    selectedQuestions = quizBank["ira"];
+  } else if (titleLower.includes("insurance") || titleLower.includes("risk protection")) {
+    selectedQuestions = quizBank["insurance"];
+  } else if (titleLower.includes("maximize retirement") || titleLower.includes("retirement savings") && !titleLower.includes("ira")) {
     selectedQuestions = quizBank["retirement"];
+  } else if (titleLower.includes("hsa") || titleLower.includes("529") || titleLower.includes("tax-advantaged")) {
+    selectedQuestions = quizBank["hsa"];
+  } else if (titleLower.includes("mortgage") || titleLower.includes("major financial goals")) {
+    selectedQuestions = quizBank["mortgage"];
+  } else if (titleLower.includes("estate") || titleLower.includes("will") || titleLower.includes("planning basics")) {
+    selectedQuestions = quizBank["estate"];
+  } else if (titleLower.includes("tax") || titleLower.includes("backdoor") || titleLower.includes("optimization")) {
+    selectedQuestions = quizBank["tax"];
   } else {
     // Default to budgeting questions
     selectedQuestions = quizBank["budgeting"];

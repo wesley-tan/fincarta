@@ -43,9 +43,9 @@ export default function FinancialRoadmap() {
     {
       id: "step-0",
       level: 0,
-      title: "Budget & Set Goals",
-      description: "Learn to track expenses and set realistic financial goals",
-      topics: ["budgeting basics", "expense tracking", "financial goals", "reducing expenses"],
+      title: "Budget & Cash Flow",
+      description: "Master income tracking, expense management, and budgeting fundamentals",
+      topics: ["Budget", "Personal budget", "Cash flow", "Expense"],
       quiz: true,
       locked: false,
       completed: progress["step-0"]?.completed || false,
@@ -54,9 +54,9 @@ export default function FinancialRoadmap() {
     {
       id: "step-1",
       level: 1,
-      title: "Emergency Fund",
-      description: "Build 3-6 months of expenses for unexpected situations",
-      topics: ["emergency fund", "savings account", "high-yield savings", "financial safety net"],
+      title: "Build Emergency Fund",
+      description: "Save 3-6 months of expenses in liquid, accessible accounts",
+      topics: ["Saving", "Savings account", "High-yield savings account", "Personal finance"],
       quiz: true,
       locked: !progress["step-0"]?.completed,
       completed: progress["step-1"]?.completed || false,
@@ -65,9 +65,9 @@ export default function FinancialRoadmap() {
     {
       id: "step-2",
       level: 2,
-      title: "Employer Match",
-      description: "Maximize free money from employer 401(k) matching",
-      topics: ["401k matching", "employer benefits", "retirement contributions", "payroll deductions"],
+      title: "Eliminate High-Interest Debt",
+      description: "Pay off credit cards and high-interest loans using proven strategies",
+      topics: ["Consumer debt", "Credit card debt", "Debt-snowball method", "Annual percentage rate"],
       quiz: true,
       locked: !progress["step-1"]?.completed,
       completed: progress["step-2"]?.completed || false,
@@ -76,9 +76,9 @@ export default function FinancialRoadmap() {
     {
       id: "step-3",
       level: 3,
-      title: "Pay Down Debt",
-      description: "Eliminate high-interest debt with avalanche or snowball method",
-      topics: ["debt payoff strategies", "avalanche method", "snowball method", "interest rates", "credit card debt"],
+      title: "Employer 401(k) Match",
+      description: "Get free money by maximizing your employer's retirement match",
+      topics: ["401(k)", "Employer Matching Program", "Payroll", "Defined contribution plan"],
       quiz: true,
       locked: !progress["step-2"]?.completed,
       completed: progress["step-3"]?.completed || false,
@@ -87,9 +87,9 @@ export default function FinancialRoadmap() {
     {
       id: "step-4",
       level: 4,
-      title: "IRA Contributions",
-      description: "Contribute to Roth or Traditional IRA for retirement",
-      topics: ["IRA accounts", "Roth IRA", "Traditional IRA", "retirement savings", "tax advantages"],
+      title: "Individual Retirement Accounts",
+      description: "Open and contribute to Roth or Traditional IRA accounts",
+      topics: ["Individual retirement account", "Roth IRA", "Traditional IRA", "Tax advantage"],
       quiz: true,
       locked: !progress["step-3"]?.completed,
       completed: progress["step-4"]?.completed || false,
@@ -98,9 +98,9 @@ export default function FinancialRoadmap() {
     {
       id: "step-5",
       level: 5,
-      title: "Max Out Retirement",
-      description: "Save 15-20% of gross income for retirement",
-      topics: ["retirement planning", "401k contributions", "compound interest", "retirement calculator"],
+      title: "Insurance & Risk Protection",
+      description: "Protect yourself and family with essential insurance coverage",
+      topics: ["Life insurance", "Health insurance", "Disability insurance", "Insurance"],
       quiz: true,
       locked: !progress["step-4"]?.completed,
       completed: progress["step-5"]?.completed || false,
@@ -109,22 +109,55 @@ export default function FinancialRoadmap() {
     {
       id: "step-6",
       level: 6,
-      title: "Other Financial Goals",
-      description: "Save for home, education, early retirement, and giving",
-      topics: ["HSA accounts", "529 plans", "home down payment", "investment strategies", "charitable giving"],
+      title: "Maximize Retirement Savings",
+      description: "Save 15-20% of income and understand compound growth",
+      topics: ["Retirement planning", "Compound interest", "Retirement savings account", "Pension"],
       quiz: true,
       locked: !progress["step-5"]?.completed,
       completed: progress["step-6"]?.completed || false,
       stars: progress["step-6"]?.stars || 0,
     },
     {
-      id: "step-advanced",
+      id: "step-7",
       level: 7,
-      title: "Advanced Strategies",
-      description: "Backdoor Roth, mega backdoor, and optimization techniques",
-      topics: ["backdoor Roth IRA", "mega backdoor Roth", "tax optimization", "estate planning"],
+      title: "Tax-Advantaged Accounts",
+      description: "Leverage HSAs, 529 plans, and other tax-optimized vehicles",
+      topics: ["Health savings account", "529 plan", "Tax deduction", "Flexible spending account"],
       quiz: true,
       locked: !progress["step-6"]?.completed,
+      completed: progress["step-7"]?.completed || false,
+      stars: progress["step-7"]?.stars || 0,
+    },
+    {
+      id: "step-8",
+      level: 8,
+      title: "Major Financial Goals",
+      description: "Save for home ownership, education, and other big purchases",
+      topics: ["Mortgage loan", "Down payment", "Student loan", "Home mortgage interest deduction"],
+      quiz: true,
+      locked: !progress["step-7"]?.completed,
+      completed: progress["step-8"]?.completed || false,
+      stars: progress["step-8"]?.stars || 0,
+    },
+    {
+      id: "step-9",
+      level: 9,
+      title: "Estate Planning Basics",
+      description: "Set up wills, trusts, and beneficiary designations",
+      topics: ["Estate planning", "Will and testament", "Trust law", "Beneficiary"],
+      quiz: true,
+      locked: !progress["step-8"]?.completed,
+      completed: progress["step-9"]?.completed || false,
+      stars: progress["step-9"]?.stars || 0,
+    },
+    {
+      id: "step-advanced",
+      level: 10,
+      title: "Advanced Tax Optimization",
+      description: "Backdoor Roth conversions, mega backdoor, and tax-loss harvesting",
+      topics: ["Backdoor Roth IRA", "Tax avoidance", "Tax bracket", "Capital gains tax"],
+      quiz: true,
+      locked: !progress["step-9"]?.completed,
       completed: progress["step-advanced"]?.completed || false,
       stars: progress["step-advanced"]?.stars || 0,
     },
@@ -205,6 +238,58 @@ export default function FinancialRoadmap() {
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8">
+      {/* Roadmap Track Selector */}
+      <div className="encarta-window mb-6">
+        <div className="encarta-window-titlebar">
+          <span className="encarta-window-title">📚 Learning Tracks</span>
+        </div>
+        <div className="p-4 bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Active: Personal Finance */}
+            <div className="border-4 border-blue-600 bg-blue-50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                  💰
+                </div>
+                <h3 className="font-bold text-sm">Personal Finance</h3>
+              </div>
+              <p className="text-xs text-gray-600 mb-2">Master budgeting, debt, retirement, and wealth building</p>
+              <div className="inline-block px-2 py-1 bg-blue-600 text-white text-xs font-bold">
+                ✓ ACTIVE TRACK
+              </div>
+            </div>
+
+            {/* Coming Soon: Investments */}
+            <div className="border-2 border-gray-300 bg-gray-50 p-4 opacity-60">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-gray-400 flex items-center justify-center text-white font-bold text-sm">
+                  📈
+                </div>
+                <h3 className="font-bold text-sm text-gray-600">Investments</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">Stocks, bonds, ETFs, portfolios, and asset allocation</p>
+              <div className="inline-block px-2 py-1 bg-yellow-500 text-white text-xs font-bold">
+                🔒 COMING SOON
+              </div>
+            </div>
+
+            {/* Coming Soon: Cryptocurrency */}
+            <div className="border-2 border-gray-300 bg-gray-50 p-4 opacity-60">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-gray-400 flex items-center justify-center text-white font-bold text-sm">
+                  ₿
+                </div>
+                <h3 className="font-bold text-sm text-gray-600">Cryptocurrency</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">Bitcoin, blockchain, DeFi, and digital asset investing</p>
+              <div className="inline-block px-2 py-1 bg-yellow-500 text-white text-xs font-bold">
+                🔒 COMING SOON
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Progress Header */}
       <div className="encarta-window mb-8">
         <div className="encarta-window-titlebar">
@@ -215,7 +300,7 @@ export default function FinancialRoadmap() {
             <div>
               <h2 className="text-lg font-bold mb-1">Your Financial Journey</h2>
               <p className="text-xs text-gray-600">
-                Complete all {totalSteps} steps to master personal finance
+                Complete all {totalSteps} steps in the Personal Finance track
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -418,9 +503,12 @@ export default function FinancialRoadmap() {
           </div>
           <div className="p-6 bg-white text-center">
             <Trophy className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Financial Mastery Achieved!</h3>
-            <p className="text-sm text-gray-600">
-              You've completed all steps in the personal finance roadmap.
+            <h3 className="text-xl font-bold mb-2">Personal Finance Track Complete!</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              You've mastered all {totalSteps} steps of the Personal Finance roadmap.
+            </p>
+            <p className="text-xs text-gray-500">
+              🎓 Keep learning! Investments and Cryptocurrency tracks coming soon.
             </p>
           </div>
         </motion.div>
