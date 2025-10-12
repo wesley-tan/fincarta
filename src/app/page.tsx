@@ -84,7 +84,7 @@ function HomeContent() {
         <header className="pt-8 pb-6 px-4">
           <div className="container mx-auto">
             <div className="flex justify-center mb-6">
-              <EncartaLogo />
+              <EncartaLogo handleSearch={handleSearch} />
             </div>
             
             {/* Navigation Tabs */}
