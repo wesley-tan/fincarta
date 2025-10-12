@@ -10,11 +10,26 @@ export default function AuthButton() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const [supabaseAvailable, setSupabaseAvailable] = useState(true);
 
   useEffect(() => {
+    // Check if Supabase is configured
+    const isConfigured = 
+      process.env.NEXT_PUBLIC_SUPABASE_URL && 
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co';
+
+    if (!isConfigured) {
+      setSupabaseAvailable(false);
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setLoading(false);
+    }).catch(() => {
+      setSupabaseAvailable(false);
       setLoading(false);
     });
 
@@ -81,6 +96,15 @@ export default function AuthButton() {
     return (
       <div className="encarta-button px-4 py-2 opacity-50 cursor-not-allowed">
         Loading...
+      </div>
+    );
+  }
+
+  // Show helpful message if Supabase not configured
+  if (!supabaseAvailable) {
+    return (
+      <div className="encarta-button px-4 py-2 opacity-50 cursor-help" title="Supabase not configured - app uses localStorage">
+        💾 Local Mode
       </div>
     );
   }
