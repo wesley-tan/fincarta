@@ -25,7 +25,6 @@ Look up any financial topic instantly with:
 - **Wikipedia Integration**: Comprehensive, trusted content
 - **AI-Powered Summaries**: Get key points at 3 difficulty levels (beginner/intermediate/advanced) using Google Gemini 2.5 Flash
 - **Voice AI Assistant**: Ask questions and get spoken responses with ElevenLabs voice synthesis
-- **Concept Graph**: Visualize connections between financial topics with interactive 3D graphs
 - **Interactive Quizzes**: AI-generated questions to test comprehension
 
 ### **🎓 Learn Mode**
@@ -112,15 +111,12 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 | **AI Models** | Google Gemini 2.5 Flash |
 | **Voice AI** | ElevenLabs |
 | **Data Source** | Wikipedia API |
-| **3D Graphics** | Three.js + React Three Fiber |
-| **Auth** | Supabase |
 
 ## 📦 Key Features Implemented
 
 ✅ **Real-time Wikipedia Search** with finance relevance detection  
 ✅ **AI Content Summarization** at 3 difficulty levels  
 ✅ **Voice AI Assistant** with speech-to-text and text-to-speech  
-✅ **Interactive 3D Concept Graphs** for visualizing topic relationships  
 ✅ **Adaptive Learning Roadmap** with 11 progressive levels  
 ✅ **AI-Generated Quizzes** based on article content  
 ✅ **Personalized Recommendations** using learning history  
@@ -132,7 +128,6 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 **Nostalgia meets Innovation**: We took the beloved Microsoft Encarta experience that defined 90s/early 2000s education and upgraded it for 2025 with:
 - Modern AI for personalization
 - Voice interactions for accessibility
-- 3D visualizations for engagement
 - Mobile-responsive design
 - Real-time content from Wikipedia
 
