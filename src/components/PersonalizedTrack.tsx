@@ -1,527 +1,274 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import { motion, AnimatePresence } from "framer-motion";
-import { Check, Lock, Star, BookOpen, RefreshCw, Zap, Trophy, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { BookOpen, Sparkles, TrendingUp, DollarSign, PiggyBank, Home, GraduationCap, Shield } from "lucide-react";
 
-interface PersonalizedStep {
-  id: string;
-  step_order: number;
+interface Article {
   title: string;
   description: string;
-  priority: string;
-  estimated_duration: string;
-  topics: string[];
-  custom_advice: string;
-  why_this_matters: string;
-  status: string;
-  stars: number;
-  has_quiz: boolean;
-  completed_at: string | null;
+  icon: any;
+  searchQuery: string;
 }
 
-interface UserProfile {
-  age: number;
-  income_range: string;
-  primary_goal: string;
-  risk_tolerance: string;
-  difficulty_level: string;
-}
+const goalArticles: Record<string, Article[]> = {
+  debt_payoff: [
+    {
+      title: "Understanding Debt Consolidation",
+      description: "Learn how to combine multiple debts into one payment and save on interest",
+      icon: DollarSign,
+      searchQuery: "debt consolidation"
+    },
+    {
+      title: "Debt Avalanche vs Snowball Method",
+      description: "Compare the two most effective strategies for paying off debt faster",
+      icon: TrendingUp,
+      searchQuery: "debt repayment strategies"
+    },
+    {
+      title: "Building Credit While Paying Off Debt",
+      description: "Maintain and improve your credit score as you eliminate debt",
+      icon: Shield,
+      searchQuery: "credit score improvement"
+    }
+  ],
+  emergency_fund: [
+    {
+      title: "How Much Should You Save?",
+      description: "Calculate the right emergency fund size based on your expenses and situation",
+      icon: PiggyBank,
+      searchQuery: "emergency fund calculator"
+    },
+    {
+      title: "Best High-Yield Savings Accounts",
+      description: "Where to keep your emergency fund for maximum growth and accessibility",
+      icon: TrendingUp,
+      searchQuery: "high yield savings accounts"
+    },
+    {
+      title: "Building Your Fund on a Budget",
+      description: "Practical tips for saving money even when finances are tight",
+      icon: DollarSign,
+      searchQuery: "saving money tips"
+    }
+  ],
+  retirement: [
+    {
+      title: "401(k) Basics and Employer Matching",
+      description: "Maximize your retirement savings with employer contributions",
+      icon: Shield,
+      searchQuery: "401k employer match"
+    },
+    {
+      title: "Roth IRA vs Traditional IRA",
+      description: "Choose the right retirement account for your tax situation",
+      icon: TrendingUp,
+      searchQuery: "IRA comparison"
+    },
+    {
+      title: "Retirement Planning by Age",
+      description: "How much you should save at every life stage",
+      icon: GraduationCap,
+      searchQuery: "retirement savings by age"
+    }
+  ],
+  home_purchase: [
+    {
+      title: "First-Time Homebuyer Programs",
+      description: "Discover grants, tax credits, and low down payment options",
+      icon: Home,
+      searchQuery: "first time home buyer programs"
+    },
+    {
+      title: "How Much House Can You Afford?",
+      description: "Calculate your budget including mortgage, taxes, and insurance",
+      icon: DollarSign,
+      searchQuery: "home affordability calculator"
+    },
+    {
+      title: "Understanding Mortgage Types",
+      description: "Compare fixed-rate, ARM, FHA, and VA loan options",
+      icon: BookOpen,
+      searchQuery: "mortgage types explained"
+    }
+  ],
+  wealth_building: [
+    {
+      title: "Introduction to Index Fund Investing",
+      description: "Build wealth with low-cost, diversified investment strategies",
+      icon: TrendingUp,
+      searchQuery: "index fund investing"
+    },
+    {
+      title: "Asset Allocation by Age",
+      description: "Balance stocks, bonds, and other investments for your timeline",
+      icon: Shield,
+      searchQuery: "asset allocation strategy"
+    },
+    {
+      title: "Tax-Efficient Investing",
+      description: "Minimize taxes and maximize returns with smart account placement",
+      icon: DollarSign,
+      searchQuery: "tax efficient investing"
+    }
+  ],
+  financial_security: [
+    {
+      title: "Building Multiple Income Streams",
+      description: "Diversify your income for greater financial stability",
+      icon: TrendingUp,
+      searchQuery: "passive income ideas"
+    },
+    {
+      title: "Insurance Coverage Essentials",
+      description: "Protect yourself with the right health, life, and disability insurance",
+      icon: Shield,
+      searchQuery: "insurance coverage guide"
+    },
+    {
+      title: "Creating a Financial Safety Net",
+      description: "Combine savings, insurance, and investments for complete security",
+      icon: PiggyBank,
+      searchQuery: "financial safety net"
+    }
+  ],
+  education: [
+    {
+      title: "529 College Savings Plans",
+      description: "Tax-advantaged ways to save for education expenses",
+      icon: GraduationCap,
+      searchQuery: "529 college savings plan"
+    },
+    {
+      title: "Student Loan Repayment Strategies",
+      description: "Navigate federal programs and refinancing options",
+      icon: BookOpen,
+      searchQuery: "student loan repayment"
+    },
+    {
+      title: "Education Tax Benefits",
+      description: "Deductions and credits that reduce the cost of education",
+      icon: DollarSign,
+      searchQuery: "education tax credits"
+    }
+  ]
+};
 
-export default function PersonalizedTrack({ userId }: { userId: string }) {
-  const router = useRouter();
-  const [steps, setSteps] = useState<PersonalizedStep[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const defaultArticles: Article[] = [
+  {
+    title: "Personal Finance Basics",
+    description: "Start your financial journey with essential money management concepts",
+    icon: BookOpen,
+    searchQuery: "personal finance basics"
+  },
+  {
+    title: "Budgeting 101",
+    description: "Create a budget that works for your lifestyle and goals",
+    icon: PiggyBank,
+    searchQuery: "budgeting guide"
+  },
+  {
+    title: "Building Wealth Over Time",
+    description: "Long-term strategies for growing your net worth",
+    icon: TrendingUp,
+    searchQuery: "wealth building strategies"
+  }
+];
+
+export default function PersonalizedTrack({ userId, userGoal }: { userId: string; userGoal?: string }) {
+  const [goal, setGoal] = useState<string>(userGoal || "");
+  const [articles, setArticles] = useState<Article[]>(defaultArticles);
 
   useEffect(() => {
-    loadProfile();
-    loadPersonalizedSteps();
-  }, [userId]);
-
-  async function loadProfile() {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        // Profile doesn't exist - this is expected for new users
-        if (error.code === 'PGRST116') {
-          console.log('No profile found - user needs onboarding');
-          return;
-        }
-        throw error;
-      }
-      setProfile(data);
-    } catch (err: any) {
-      console.error('Error loading profile:', err);
+    if (userGoal) {
+      setGoal(userGoal);
+      const recommendedArticles = goalArticles[userGoal] || defaultArticles;
+      setArticles(recommendedArticles);
     }
-  }
+  }, [userGoal]);
 
-  async function loadPersonalizedSteps() {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase
-        .from('personalized_track_steps')
-        .select('*')
-        .eq('user_id', userId)
-        .order('step_order', { ascending: true });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setSteps(data);
-      } else {
-        // No steps yet - check if profile exists before generating
-        const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('primary_goal')
-          .eq('id', userId)
-          .single();
-
-        if (profileData && profileData.primary_goal) {
-          // Profile exists, generate roadmap
-          await generateRoadmap();
-        } else {
-          // No profile - user needs to complete onboarding first
-          console.log('No profile found - onboarding required');
-        }
-      }
-    } catch (err: any) {
-      console.error('Error loading steps:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function generateRoadmap() {
-    setGenerating(true);
-    setError(null);
-
-    try {
-      // Get user profile first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileError || !profileData) {
-        throw new Error('Profile not found. Please complete onboarding first.');
-      }
-
-      // Generate simple default steps based on user goal
-      const defaultSteps = generateDefaultSteps(profileData);
-
-      // Save steps to database
-      const { error: insertError } = await supabase
-        .from('personalized_track_steps')
-        .insert(defaultSteps);
-
-      if (insertError) throw insertError;
-
-      // Reload steps
-      await loadPersonalizedSteps();
-    } catch (err: any) {
-      console.error('Failed to generate roadmap:', err);
-      setError(err.message);
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  function generateDefaultSteps(profile: any): any[] {
-    const goalSteps: { [key: string]: any[] } = {
-      'debt_payoff': [
-        {
-          user_id: userId,
-          step_order: 0,
-          title: 'Understand Your Debt',
-          description: 'List all debts, interest rates, and minimum payments',
-          priority: 'critical',
-          estimated_duration: '1 week',
-          topics: ['Debt Management', 'Credit Cards', 'Loans'],
-          custom_advice: 'Focus on high-interest debt first to save money',
-          why_this_matters: 'Knowing exactly what you owe is the first step to becoming debt-free',
-          status: 'pending',
-        },
-        {
-          user_id: userId,
-          step_order: 1,
-          title: 'Choose Your Payoff Strategy',
-          description: 'Learn about avalanche vs snowball methods',
-          priority: 'high',
-          estimated_duration: '2 weeks',
-          topics: ['Debt Avalanche', 'Debt Snowball', 'Budgeting'],
-          custom_advice: 'The avalanche method saves more money, but snowball gives quick wins',
-          why_this_matters: 'Having a clear strategy keeps you motivated',
-          status: 'pending',
-        },
-      ],
-      'retirement': [
-        {
-          user_id: userId,
-          step_order: 0,
-          title: 'Learn Retirement Basics',
-          description: 'Understand 401(k), IRA, and compound interest',
-          priority: 'critical',
-          estimated_duration: '1 week',
-          topics: ['401k', 'IRA', 'Compound Interest', 'Retirement Planning'],
-          custom_advice: 'Start early - even small amounts grow significantly over time',
-          why_this_matters: 'Time is your biggest advantage in retirement savings',
-          status: 'pending',
-        },
-        {
-          user_id: userId,
-          step_order: 1,
-          title: 'Calculate Your Retirement Number',
-          description: 'Determine how much you need to retire comfortably',
-          priority: 'high',
-          estimated_duration: '1 week',
-          topics: ['Retirement Calculator', 'Savings Goals', 'Financial Planning'],
-          custom_advice: 'Aim for 15% of income going toward retirement',
-          why_this_matters: 'Knowing your target helps you stay on track',
-          status: 'pending',
-        },
-      ],
-      'just_learning': [
-        {
-          user_id: userId,
-          step_order: 0,
-          title: 'Financial Literacy Foundations',
-          description: 'Learn about income, expenses, assets, and liabilities',
-          priority: 'critical',
-          estimated_duration: '1 week',
-          topics: ['Personal Finance Basics', 'Budgeting 101', 'Money Management'],
-          custom_advice: 'Start with tracking where your money goes each month',
-          why_this_matters: 'Understanding these concepts is key to financial success',
-          status: 'pending',
-        },
-        {
-          user_id: userId,
-          step_order: 1,
-          title: 'Create Your First Budget',
-          description: 'Set up a simple budget using the 50/30/20 rule',
-          priority: 'high',
-          estimated_duration: '2 weeks',
-          topics: ['Budgeting', '50/30/20 Rule', 'Expense Tracking'],
-          custom_advice: '50% needs, 30% wants, 20% savings/debt',
-          why_this_matters: 'A budget gives you control over your money',
-          status: 'pending',
-        },
-      ],
-    };
-
-    // Return steps for the user's goal, or default to 'just_learning'
-    return goalSteps[profile.primary_goal] || goalSteps['just_learning'];
-  }
-
-  const handleStepClick = (step: PersonalizedStep, topic: string) => {
-    if (step.status === 'completed') return;
-    
-    // Track article read
-    trackActivity('article_read', topic);
-    
-    // Navigate to search with the topic
-    router.push(`/?search=${encodeURIComponent(topic)}`);
+  const handleArticleClick = (searchQuery: string) => {
+    // Navigate to home page with search query
+    window.location.href = `/?search=${encodeURIComponent(searchQuery)}`;
   };
 
-  const handleQuizClick = (step: PersonalizedStep) => {
-    if (step.status === 'completed') return;
-    router.push(`/roadmap/personalized/quiz/${step.id}`);
+  const goalTitles: Record<string, string> = {
+    debt_payoff: "Pay Off Debt",
+    emergency_fund: "Build Emergency Fund",
+    retirement: "Plan for Retirement",
+    home_purchase: "Save for Home",
+    wealth_building: "Build Wealth",
+    financial_security: "Achieve Financial Security",
+    education: "Save for Education"
   };
-
-  async function trackActivity(activityType: string, relatedTopic?: string) {
-    try {
-      await supabase.from('user_activity_log').insert({
-        user_id: userId,
-        activity_type: activityType,
-        related_topic: relatedTopic,
-        metadata: { timestamp: new Date().toISOString() }
-      });
-    } catch (err) {
-      console.error('Failed to track activity:', err);
-    }
-  }
-
-  const completedSteps = steps.filter(s => s.status === 'completed').length;
-  const progressPercentage = steps.length > 0 ? (completedSteps / steps.length) * 100 : 0;
-
-  // Loading State
-  if (loading || generating) {
-    return (
-      <div className="encarta-window max-w-4xl mx-auto">
-        <div className="encarta-window-titlebar">
-          <span className="encarta-window-title">
-            {generating ? '✨ Generating Your Personalized Path...' : '💾 Loading...'}
-          </span>
-        </div>
-        <div className="p-8 bg-white text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="inline-block mb-4"
-          >
-            <Zap className="w-12 h-12 text-purple-600" />
-          </motion.div>
-          <p className="text-sm text-gray-700 mb-2">
-            {generating 
-              ? 'Our AI is analyzing your profile and creating a custom roadmap just for you...'
-              : 'Loading your personalized financial path...'
-            }
-          </p>
-          <p className="text-xs text-gray-500">This takes about 5-10 seconds</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error State
-  if (error) {
-    return (
-      <div className="encarta-window max-w-4xl mx-auto">
-        <div className="encarta-window-titlebar">
-          <span className="encarta-window-title">❌ Error</span>
-        </div>
-        <div className="p-6 bg-white text-center">
-          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <p className="text-sm text-gray-700 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="encarta-button"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Header with Profile Summary */}
-      <div className="encarta-window mb-8">
+    <div className="w-full">
+      <div className="encarta-window">
         <div className="encarta-window-titlebar">
-          <span className="encarta-window-title">✨ Your Personalized Financial Path</span>
+          <span className="encarta-window-title">
+            ✨ Your Personalized Financial Path
+            {goal && ` - ${goalTitles[goal]}`}
+          </span>
         </div>
-        <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              {profile && (
-                <>
-                  <h2 className="text-lg font-bold mb-2">
-                    Custom Plan for {profile.age}-year-old focused on{" "}
-                    <span className="text-purple-600">
-                      {profile.primary_goal?.replace(/_/g, ' ')}
-                    </span>
-                  </h2>
-                  <p className="text-xs text-gray-600 mb-2">
-                    This roadmap was AI-generated based on your income, goals, and current financial situation.
-                  </p>
-                  <div className="flex gap-2 text-xs text-gray-600">
-                    <span>💰 {profile.income_range?.replace(/_/g, ' ')}</span>
-                    <span>•</span>
-                    <span>📊 {profile.risk_tolerance} risk</span>
-                    <span>•</span>
-                    <span>📚 {profile.difficulty_level} level</span>
-                  </div>
-                </>
-              )}
-            </div>
-            <button
-              onClick={generateRoadmap}
-              className="encarta-button flex items-center gap-2 text-xs flex-shrink-0"
-              disabled={generating}
-              title="Regenerate your roadmap with updated AI analysis"
-            >
-              <RefreshCw className={`w-3 h-3 ${generating ? 'animate-spin' : ''}`} /> 
-              {generating ? 'Generating...' : 'Regenerate'}
-            </button>
-          </div>
 
-          {/* Progress Bar */}
-          <div className="w-full h-6 border-2 border-gray-800 bg-white relative">
-            <motion.div
-              className="h-full bg-gradient-to-r from-purple-600 to-blue-600"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercentage}%` }}
-              transition={{ duration: 0.5 }}
-            />
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800">
-              {completedSteps}/{steps.length} STEPS COMPLETE ({Math.round(progressPercentage)}%)
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Personalized Steps */}
-      <div className="space-y-6">
-        {steps.map((step, index) => {
-          const isLocked = index > 0 && steps[index - 1].status !== 'completed';
-          const isCompleted = step.status === 'completed';
-
-          return (
-            <motion.div
-              key={step.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <div
-                className={`encarta-window transition-all ${
-                  isLocked ? 'opacity-60' : 'hover:shadow-lg'
-                }`}
-              >
-                <div className="encarta-window-titlebar">
-                  <div className="flex items-center justify-between flex-1">
-                    <span className="encarta-window-title">
-                      STEP {step.step_order + 1}: {step.title}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {/* Priority Badge */}
-                      <div className={`
-                        text-[10px] px-2 py-0.5 font-bold
-                        ${step.priority === 'critical' ? 'bg-red-600 text-white' :
-                          step.priority === 'high' ? 'bg-orange-500 text-white' :
-                          step.priority === 'medium' ? 'bg-yellow-500 text-black' :
-                          'bg-gray-400 text-white'}
-                      `}>
-                        {step.priority.toUpperCase()}
-                      </div>
-
-                      {/* Stars */}
-                      <div className="flex items-center gap-1 text-yellow-300">
-                        {[...Array(3)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-3 h-3"
-                            fill={i < step.stars ? "currentColor" : "none"}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6 bg-white">
-                  <div className="flex items-start gap-4">
-                    {/* Status Icon */}
-                    <div
-                      className={`w-12 h-12 flex-shrink-0 flex items-center justify-center border-2 ${
-                        isCompleted
-                          ? "bg-green-500 border-green-700"
-                          : isLocked
-                          ? "bg-gray-300 border-gray-500"
-                          : "bg-purple-500 border-purple-700"
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <Check className="w-6 h-6 text-white" />
-                      ) : isLocked ? (
-                        <Lock className="w-6 h-6 text-gray-600" />
-                      ) : (
-                        <BookOpen className="w-6 h-6 text-white" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-700 mb-2">{step.description}</p>
-
-                      {/* Duration */}
-                      {step.estimated_duration && (
-                        <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                          ⏱️ Estimated time: <span className="font-semibold">{step.estimated_duration}</span>
-                        </div>
-                      )}
-
-                      {/* Why This Matters (Personalized) */}
-                      {step.why_this_matters && (
-                        <div className="mb-3 p-3 bg-purple-50 border-l-4 border-purple-600">
-                          <p className="text-xs font-medium text-purple-900 mb-1">
-                            💡 Why this is prioritized for you:
-                          </p>
-                          <p className="text-xs text-purple-800">{step.why_this_matters}</p>
-                        </div>
-                      )}
-
-                      {/* Custom Advice */}
-                      {step.custom_advice && (
-                        <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-600">
-                          <p className="text-xs font-medium text-blue-900 mb-1">🎯 Personalized Advice:</p>
-                          <p className="text-xs text-blue-800">{step.custom_advice}</p>
-                        </div>
-                      )}
-
-                      {/* Topics */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {step.topics.map((topic) => (
-                          <button
-                            key={topic}
-                            className="encarta-button text-xs"
-                            onClick={() => handleStepClick(step, topic)}
-                            disabled={isLocked}
-                          >
-                            {topic}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Quiz Button */}
-                      {step.has_quiz && (
-                        <button
-                          className="encarta-button text-xs"
-                          disabled={isLocked}
-                          onClick={() => handleQuizClick(step)}
-                        >
-                          🎯 Take Personalized Quiz
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+        <div className="p-6 bg-white">
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300 rounded">
+            <div className="flex items-start gap-3">
+              <Sparkles className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="font-bold text-lg mb-2 text-gray-900">
+                  Recommended Articles for You
+                </h3>
+                <p className="text-sm text-gray-700">
+                  Based on your goal{goal && ` to ${goalTitles[goal]?.toLowerCase()}`}, we've selected these articles to help you get started.
+                </p>
               </div>
-            </motion.div>
-          );
-        })}
-      </div>
+            </div>
+          </div>
 
-      {/* Completion */}
-      {completedSteps === steps.length && steps.length > 0 && (
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="encarta-window mt-8"
-        >
-          <div className="encarta-window-titlebar">
-            <span className="encarta-window-title">🏆 Congratulations!</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {articles.map((article, index) => {
+              const Icon = article.icon;
+              return (
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleArticleClick(article.searchQuery)}
+                  className="encarta-window text-left hover:shadow-lg transition-shadow"
+                >
+                  <div className="encarta-window-titlebar">
+                    <span className="encarta-window-title flex items-center gap-2">
+                      <Icon className="w-4 h-4" />
+                      Article {index + 1}
+                    </span>
+                  </div>
+                  <div className="p-4 bg-white">
+                    <h4 className="font-bold text-sm mb-2 text-gray-900">
+                      {article.title}
+                    </h4>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      {article.description}
+                    </p>
+                    <div className="mt-3 text-xs font-bold text-blue-600 flex items-center gap-1">
+                      <BookOpen className="w-3 h-3" />
+                      Read Article →
+                    </div>
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
-          <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 text-center">
-            <Trophy className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">You've Completed Your Personalized Path!</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Your financial journey is unique, and you've taken amazing steps forward. Ready for the next level?
+
+          <div className="mt-6 p-4 bg-gray-50 border-2 border-gray-300 rounded text-center">
+            <p className="text-sm text-gray-700">
+              💡 <strong>Tip:</strong> Click any article card to start learning. You can always come back here for more recommendations!
             </p>
-            <button
-              onClick={generateRoadmap}
-              className="encarta-button bg-purple-600 text-white hover:bg-purple-700"
-            >
-              🔄 Generate Advanced Roadmap
-            </button>
           </div>
-        </motion.div>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
-

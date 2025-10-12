@@ -19,6 +19,7 @@ export default function RoadmapPage() {
   const [activeTrack, setActiveTrack] = useState("personal_finance");
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userGoal, setUserGoal] = useState<string | undefined>(undefined);
   const supabase = createClient();
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function RoadmapPage() {
             setActiveTrack(pref.active_track);
           }
 
-          // Check if needs onboarding
+          // Check if needs onboarding and load user goal
           const { data: profile } = await supabase
             .from('user_profiles')
             .select('*')
@@ -50,6 +51,9 @@ export default function RoadmapPage() {
             if (pref && pref.active_track === 'personalized') {
               setNeedsOnboarding(true);
             }
+          } else {
+            // Store user's goal for personalized track
+            setUserGoal(profile.primary_goal);
           }
         }
       } catch (error) {
@@ -253,7 +257,7 @@ export default function RoadmapPage() {
                         <span className="font-bold text-sm">My Personalized Path</span>
                       </div>
                       <p className="text-xs text-gray-600 leading-relaxed mb-3">
-                        AI-generated roadmap tailored to YOUR goals
+                        Get 3 personalized article recommendations based on YOUR goals
                       </p>
                       {activeTrack === 'personalized' && user && (
                         <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs px-2 py-1 inline-block font-bold">
@@ -271,7 +275,7 @@ export default function RoadmapPage() {
                   {!user && (
                     <div className="mt-4 p-3 bg-purple-50 border-2 border-purple-300 text-xs text-gray-700">
                       <Sparkles className="w-4 h-4 inline mr-2 text-purple-600" />
-                      <strong>Get Your Personalized Financial Roadmap:</strong> Sign in to unlock AI-powered custom learning paths tailored to your age, income, and goals.
+                      <strong>Get Personalized Article Recommendations:</strong> Sign in to receive 3 curated articles tailored to your financial goals.
                     </div>
                   )}
                 </div>
@@ -280,7 +284,7 @@ export default function RoadmapPage() {
 
             {/* Render appropriate track */}
             {activeTrack === "personalized" && user && !needsOnboarding ? (
-              <PersonalizedTrack userId={user.id} />
+              <PersonalizedTrack userId={user.id} userGoal={userGoal} />
             ) : activeTrack === "personalized" && needsOnboarding ? (
               // Show placeholder while onboarding modal is displayed
               <div className="encarta-window max-w-4xl mx-auto">
