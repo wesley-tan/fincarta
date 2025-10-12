@@ -5,10 +5,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, articleContext, conversationId } = await request.json();
+    const { message, articleContext, conversationId, image } = await request.json();
 
     console.log("[Agent] Processing message:", message);
     console.log("[Agent] Article context:", articleContext?.title || "None");
+    console.log("[Agent] Image provided:", image ? "Yes" : "No");
 
     if (!message) {
       return NextResponse.json(
@@ -32,7 +33,25 @@ export async function POST(request: NextRequest) {
     let responseText = "";
     if (articleContext) {
       const articleExcerpt = articleContext.text.substring(0, 3000);
-      const prompt = `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
+      const textPrompt = image 
+        ? `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
+
+ARTICLE CONTEXT:
+${articleExcerpt}
+
+The user has uploaded an image and asked: ${message}
+
+INSTRUCTIONS:
+- Analyze the image in the context of the article
+- If it's a financial chart, graph, or document, explain what you see
+- Connect your analysis to the article topic when relevant
+- Be conversational, warm, and encouraging
+- Keep response under 5 sentences
+- Use simple language appropriate for someone learning about finance
+- Don't use markdown or special formatting
+
+Answer naturally as if speaking to a friend:`
+        : `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
 
 ARTICLE CONTEXT:
 ${articleExcerpt}
@@ -92,7 +111,23 @@ Answer naturally as if speaking to a friend:`;
             },
           });
           
-          const result = await model.generateContent(prompt);
+          // Handle multimodal input (text + image) or text-only
+          let result;
+          if (image) {
+            console.log(`[Agent] Processing with image (multimodal)`);
+            result = await model.generateContent([
+              {
+                inlineData: {
+                  data: image,
+                  mimeType: "image/png"
+                }
+              },
+              textPrompt
+            ]);
+          } else {
+            result = await model.generateContent(textPrompt);
+          }
+          
           const response = await result.response;
           responseText = response.text().trim();
           generated = true;

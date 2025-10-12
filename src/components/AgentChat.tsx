@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX } from "lucide-react";
+import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Image as ImageIcon, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
   role: "user" | "agent";
   content: string;
   timestamp: Date;
+  image?: string; // Base64 image data
 }
 
 interface AgentChatProps {
@@ -29,9 +30,12 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const [conversationId, setConversationId] = useState<string>("");
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasPlayedGreeting = useRef(false);
 
   const scrollToBottom = () => {
@@ -181,32 +185,80 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be smaller than 5MB");
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      const base64Data = base64.split(",")[1]; // Remove data:image/...;base64, prefix
+      setUploadedImage(base64Data);
+      setImagePreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if ((!input.trim() && !uploadedImage) || loading) return;
 
     const userMessage: Message = {
       role: "user",
-      content: input.trim(),
+      content: input.trim() || "📸 [Image uploaded]",
       timestamp: new Date(),
+      image: imagePreview || undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input.trim();
+    const currentImage = uploadedImage;
     setInput("");
+    setUploadedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setLoading(true);
 
     try {
+      const requestBody: any = {
+        message: currentInput || "Analyze this image in the context of the article.",
+        articleContext: {
+          title: articleTitle,
+          text: articleText,
+        },
+        conversationId,
+      };
+
+      if (currentImage) {
+        requestBody.image = currentImage;
+      }
+
       const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: input.trim(),
-          articleContext: {
-            title: articleTitle,
-            text: articleText,
-          },
-          conversationId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -299,6 +351,15 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
                     ? "bg-white border-2 border-[#808080]"
                     : "bg-[#000080] text-white"
                 }`}>
+                  {message.image && (
+                    <div className="mb-2">
+                      <img
+                        src={message.image}
+                        alt="Uploaded"
+                        className="max-w-[200px] rounded border-2 border-white/50"
+                      />
+                    </div>
+                  )}
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-1 px-1">
@@ -329,43 +390,80 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
 
       {/* Input */}
       <div className="encarta-status-bar">
-        <form onSubmit={handleSubmit} className="flex gap-2 p-2 w-full">
-          <div className="flex-1">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2 p-2 w-full">
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-h-20 rounded border-2 border-[#808080]"
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                title="Remove image"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={isRecording ? "Listening..." : "Ask me anything or upload an image..."}
+                className="w-full px-3 py-2 text-sm bg-white"
+                disabled={loading || isRecording}
+                style={{
+                  borderTop: "2px solid #808080",
+                  borderLeft: "2px solid #808080",
+                  borderRight: "2px solid #FFFFFF",
+                  borderBottom: "2px solid #FFFFFF",
+                  fontFamily: "'MS Sans Serif', Arial, sans-serif",
+                }}
+              />
+            </div>
             <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={isRecording ? "Listening..." : "Ask me anything or click the mic..."}
-              className="w-full px-3 py-2 text-sm bg-white"
-              disabled={loading || isRecording}
-              style={{
-                borderTop: "2px solid #808080",
-                borderLeft: "2px solid #808080",
-                borderRight: "2px solid #FFFFFF",
-                borderBottom: "2px solid #FFFFFF",
-                fontFamily: "'MS Sans Serif', Arial, sans-serif",
-              }}
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
             />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="encarta-button px-3 flex items-center gap-2"
+              title="Upload image"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={loading}
+              className={`encarta-button px-3 flex items-center gap-2 ${
+                isRecording ? "bg-red-500 text-white" : ""
+              }`}
+              title={isRecording ? "Stop recording" : "Start voice input"}
+            >
+              <Mic className={`w-4 h-4 ${isRecording ? "animate-pulse" : ""}`} />
+            </button>
+            <button
+              type="submit"
+              disabled={loading || (!input.trim() && !uploadedImage)}
+              className="encarta-button px-4 flex items-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              <span className="hidden sm:inline">Send</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={loading}
-            className={`encarta-button px-3 flex items-center gap-2 ${
-              isRecording ? "bg-red-500 text-white" : ""
-            }`}
-            title={isRecording ? "Stop recording" : "Start voice input"}
-          >
-            <Mic className={`w-4 h-4 ${isRecording ? "animate-pulse" : ""}`} />
-          </button>
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="encarta-button px-4 flex items-center gap-2"
-          >
-            <Send className="w-4 h-4" />
-            <span className="hidden sm:inline">Send</span>
-          </button>
         </form>
       </div>
     </div>
