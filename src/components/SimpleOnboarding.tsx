@@ -69,7 +69,7 @@ export default function SimpleOnboarding({ userId, onComplete }: SimpleOnboardin
 
         <div className="p-6 bg-white">
           <p className="text-sm text-gray-600 mb-6">
-            What financial topic interests you most right now?
+            Let's personalize your roadmap. What's your main financial goal?
           </p>
 
           <div className="space-y-3">
@@ -111,11 +111,11 @@ export default function SimpleOnboarding({ userId, onComplete }: SimpleOnboardin
                   >
                     <Sparkles className="w-4 h-4" />
                   </motion.div>
-                  Finding Articles...
+                  Creating Your Roadmap...
                 </>
               ) : (
                 <>
-                  Get My Recommendations <ArrowRight className="w-4 h-4" />
+                  Create My Personalized Roadmap <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
