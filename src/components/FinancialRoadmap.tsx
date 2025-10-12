@@ -137,14 +137,14 @@ export default function FinancialRoadmap() {
   // Get current unlocked step
   const currentStep = steps.find((s) => !s.locked && !s.completed) || steps[steps.length - 1];
 
-  const handleStepClick = (step: Step) => {
+  const handleStepClick = (step: Step, topic: string) => {
     if (step.locked) return;
     
     // Track article read
-    trackArticleRead(step.topics[0]);
+    trackArticleRead(topic);
     
     // Navigate to search with the first topic
-    router.push(`/?search=${encodeURIComponent(step.topics[0])}`);
+    router.push(`/?search=${encodeURIComponent(topic)}`);
   };
 
   const handleQuizClick = (step: Step, e: React.MouseEvent) => {
@@ -323,7 +323,6 @@ export default function FinancialRoadmap() {
               className={`encarta-window cursor-pointer transition-all ${
                 step.locked ? "opacity-50" : "hover:shadow-lg"
               }`}
-              onClick={() => handleStepClick(step)}
             >
               <div className="encarta-window-titlebar">
                 <span className="encarta-window-title">
@@ -368,27 +367,18 @@ export default function FinancialRoadmap() {
                     {/* Topics */}
                     <div className="flex flex-wrap gap-2 mb-3">
                       {step.topics.map((topic) => (
-                        <span
+                        <button
                           key={topic}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs border border-blue-300"
+                          className="encarta-button text-xs"
+                          onClick={(e) => handleStepClick(step, topic)}
                         >
                           {topic}
-                        </span>
+                        </button>
                       ))}
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                      <button
-                        className="encarta-button text-xs"
-                        disabled={step.locked}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStepClick(step);
-                        }}
-                      >
-                        📖 Learn
-                      </button>
                       {step.quiz && (
                         <button
                           className="encarta-button text-xs"
