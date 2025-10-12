@@ -3,22 +3,14 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function EncartaLogo() {
+export default function EncartaLogo({ handleSearch }: { handleSearch: (query: string) => void }) {
 
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("🏠 Logo clicked - navigating to home");
-
-    // Force a clean navigation to home page without any search params
-    window.location.href = "/";
-  };
 
   return (
     <Link
       href="/"
       className="flex items-center gap-4"
-      onClick={handleLogoClick}
+      onClick={(e) => handleSearch("")}
     >
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
