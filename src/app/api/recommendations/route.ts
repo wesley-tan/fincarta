@@ -3,6 +3,41 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+// Fallback recommendations when AI fails
+function getFallbackRecommendations(difficulty: string, completedSteps: number) {
+  const beginnerTopics = [
+    { topic: "Budget", reason: "Essential foundation for managing money", difficulty: "beginner", relevance: "Core personal finance skill" },
+    { topic: "Emergency fund", reason: "Financial safety net for unexpected expenses", difficulty: "beginner", relevance: "Protects against financial emergencies" },
+    { topic: "Compound interest", reason: "How money grows over time", difficulty: "beginner", relevance: "Key to building wealth" },
+    { topic: "Credit score", reason: "Understanding credit and borrowing", difficulty: "beginner", relevance: "Affects loan rates and opportunities" },
+    { topic: "Debt", reason: "Managing and eliminating debt", difficulty: "beginner", relevance: "Critical for financial freedom" }
+  ];
+
+  const intermediateTopics = [
+    { topic: "401(k)", reason: "Employer-sponsored retirement savings", difficulty: "intermediate", relevance: "Maximize employer matching" },
+    { topic: "Individual retirement account", reason: "Personal retirement savings options", difficulty: "intermediate", relevance: "Tax-advantaged retirement planning" },
+    { topic: "Life insurance", reason: "Protecting family's financial future", difficulty: "intermediate", relevance: "Essential risk management" },
+    { topic: "Health savings account", reason: "Tax-advantaged medical savings", difficulty: "intermediate", relevance: "Triple tax benefits" },
+    { topic: "Mortgage loan", reason: "Home buying and financing", difficulty: "intermediate", relevance: "Major financial decision" }
+  ];
+
+  const advancedTopics = [
+    { topic: "Backdoor Roth IRA", reason: "Advanced retirement strategy for high earners", difficulty: "advanced", relevance: "Tax optimization technique" },
+    { topic: "Estate planning", reason: "Wealth transfer and inheritance planning", difficulty: "advanced", relevance: "Protect family wealth" },
+    { topic: "Tax bracket", reason: "Understanding progressive tax system", difficulty: "advanced", relevance: "Tax planning optimization" },
+    { topic: "Capital gains tax", reason: "Taxes on investment profits", difficulty: "advanced", relevance: "Investment tax strategy" },
+    { topic: "529 plan", reason: "Education savings with tax benefits", difficulty: "advanced", relevance: "College funding strategy" }
+  ];
+
+  if (difficulty === "beginner" || completedSteps < 3) {
+    return beginnerTopics.slice(0, 5);
+  } else if (difficulty === "intermediate" || completedSteps < 7) {
+    return intermediateTopics.slice(0, 5);
+  } else {
+    return advancedTopics.slice(0, 5);
+  }
+}
+
 interface ProgressData {
   stepId: string;
   completed: boolean;
@@ -85,8 +120,27 @@ Do not include any markdown, explanations, or text outside the JSON array.`;
     }
 
 
-    // Parse AI response
-    const recommendations = JSON.parse(text.trim());
+    // Parse AI response with fallback
+    let recommendations = [];
+    
+    try {
+      // Clean up the response text
+      const cleanedText = text.trim()
+        .replace(/```json\n?/g, '')
+        .replace(/\n?```/g, '')
+        .trim();
+      
+      recommendations = JSON.parse(cleanedText);
+      
+      // Validate the response structure
+      if (!Array.isArray(recommendations) || recommendations.length === 0) {
+        throw new Error("Invalid recommendations format");
+      }
+      
+    } catch (parseError) {
+      // Fallback recommendations based on user level
+      recommendations = getFallbackRecommendations(difficulty, completedSteps);
+    }
 
     return NextResponse.json({
       recommendations,
