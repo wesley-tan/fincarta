@@ -30,7 +30,7 @@ function HomeContent() {
   // Handle search from URL params (when coming from roadmap)
   useEffect(() => {
     const searchQuery = searchParams.get('search');
-    if (searchQuery) {
+    if (searchQuery && searchQuery.trim() !== '') {
       handleSearch(searchQuery);
     }
   }, [searchParams]);
@@ -84,7 +84,7 @@ function HomeContent() {
         <header className="pt-8 pb-6 px-4">
           <div className="container mx-auto">
             <div className="flex justify-center mb-6">
-              <EncartaLogo />
+              <EncartaLogo handleSearch={handleSearch} />
             </div>
             
             {/* Navigation Tabs */}

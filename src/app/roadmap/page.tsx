@@ -10,18 +10,6 @@ import { motion } from "framer-motion";
 export default function RoadmapPage() {
   const router = useRouter();
 
-  const handleNodeClick = (topic: string) => {
-    // Navigate to home with search query
-    router.push(`/?search=${encodeURIComponent(topic)}`);
-  };
-
-  const handlePracticeClick = (nodeId: string) => {
-    // TODO: Open Nessie practice mode
-    console.log("Practice mode for:", nodeId);
-    // For now, show alert that this requires Nessie API setup
-    alert("🏦 Practice mode will be available once Nessie API is integrated!");
-  };
-
   return (
     <div className="min-h-screen encarta-bg relative overflow-y-auto overflow-x-hidden">
       <BubbleBackground />
@@ -60,10 +48,7 @@ export default function RoadmapPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <FinancialRoadmap 
-              onNodeClick={handleNodeClick}
-              onPracticeClick={handlePracticeClick}
-            />
+            <FinancialRoadmap />
           </motion.div>
         </main>
       </div>
