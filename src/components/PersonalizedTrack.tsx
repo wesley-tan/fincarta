@@ -88,21 +88,30 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
   async function generateRoadmap() {
     setGenerating(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/personalized-roadmap/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      });
+      // Get user profile first
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate roadmap');
+      if (profileError || !profileData) {
+        throw new Error('Profile not found. Please complete onboarding first.');
       }
 
-      // Reload steps after generation
+      // Generate simple default steps based on user goal
+      const defaultSteps = generateDefaultSteps(profileData);
+
+      // Save steps to database
+      const { error: insertError } = await supabase
+        .from('personalized_track_steps')
+        .insert(defaultSteps);
+
+      if (insertError) throw insertError;
+
+      // Reload steps
       await loadPersonalizedSteps();
     } catch (err: any) {
       console.error('Failed to generate roadmap:', err);
@@ -110,6 +119,92 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
     } finally {
       setGenerating(false);
     }
+  }
+
+  function generateDefaultSteps(profile: any): any[] {
+    const goalSteps: { [key: string]: any[] } = {
+      'debt_payoff': [
+        {
+          user_id: userId,
+          step_order: 0,
+          title: 'Understand Your Debt',
+          description: 'List all debts, interest rates, and minimum payments',
+          priority: 'critical',
+          estimated_duration: '1 week',
+          topics: ['Debt Management', 'Credit Cards', 'Loans'],
+          custom_advice: 'Focus on high-interest debt first to save money',
+          why_this_matters: 'Knowing exactly what you owe is the first step to becoming debt-free',
+          status: 'pending',
+        },
+        {
+          user_id: userId,
+          step_order: 1,
+          title: 'Choose Your Payoff Strategy',
+          description: 'Learn about avalanche vs snowball methods',
+          priority: 'high',
+          estimated_duration: '2 weeks',
+          topics: ['Debt Avalanche', 'Debt Snowball', 'Budgeting'],
+          custom_advice: 'The avalanche method saves more money, but snowball gives quick wins',
+          why_this_matters: 'Having a clear strategy keeps you motivated',
+          status: 'pending',
+        },
+      ],
+      'retirement': [
+        {
+          user_id: userId,
+          step_order: 0,
+          title: 'Learn Retirement Basics',
+          description: 'Understand 401(k), IRA, and compound interest',
+          priority: 'critical',
+          estimated_duration: '1 week',
+          topics: ['401k', 'IRA', 'Compound Interest', 'Retirement Planning'],
+          custom_advice: 'Start early - even small amounts grow significantly over time',
+          why_this_matters: 'Time is your biggest advantage in retirement savings',
+          status: 'pending',
+        },
+        {
+          user_id: userId,
+          step_order: 1,
+          title: 'Calculate Your Retirement Number',
+          description: 'Determine how much you need to retire comfortably',
+          priority: 'high',
+          estimated_duration: '1 week',
+          topics: ['Retirement Calculator', 'Savings Goals', 'Financial Planning'],
+          custom_advice: 'Aim for 15% of income going toward retirement',
+          why_this_matters: 'Knowing your target helps you stay on track',
+          status: 'pending',
+        },
+      ],
+      'just_learning': [
+        {
+          user_id: userId,
+          step_order: 0,
+          title: 'Financial Literacy Foundations',
+          description: 'Learn about income, expenses, assets, and liabilities',
+          priority: 'critical',
+          estimated_duration: '1 week',
+          topics: ['Personal Finance Basics', 'Budgeting 101', 'Money Management'],
+          custom_advice: 'Start with tracking where your money goes each month',
+          why_this_matters: 'Understanding these concepts is key to financial success',
+          status: 'pending',
+        },
+        {
+          user_id: userId,
+          step_order: 1,
+          title: 'Create Your First Budget',
+          description: 'Set up a simple budget using the 50/30/20 rule',
+          priority: 'high',
+          estimated_duration: '2 weeks',
+          topics: ['Budgeting', '50/30/20 Rule', 'Expense Tracking'],
+          custom_advice: '50% needs, 30% wants, 20% savings/debt',
+          why_this_matters: 'A budget gives you control over your money',
+          status: 'pending',
+        },
+      ],
+    };
+
+    // Return steps for the user's goal, or default to 'just_learning'
+    return goalSteps[profile.primary_goal] || goalSteps['just_learning'];
   }
 
   const handleStepClick = (step: PersonalizedStep, topic: string) => {
