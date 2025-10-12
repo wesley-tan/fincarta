@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ShieldCheck, ArrowLeft } from "lucide-react";
+import { BookOpen, Brain, Network, ShieldCheck, ArrowLeft, Bot } from "lucide-react";
 import SummaryPanel from "./SummaryPanel";
 import TrustMeter from "./TrustMeter";
+import AgentChat from "./AgentChat";
 import { motion } from "framer-motion";
 
 interface ArticleData {
@@ -85,6 +86,10 @@ export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayP
                 <ShieldCheck className="w-3 h-3" />
                 Trust Meter
               </TabsTrigger>
+              <TabsTrigger value="agent" className="encarta-tab flex items-center gap-2">
+                <Bot className="w-3 h-3" />
+                AI Assistant
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -95,6 +100,13 @@ export default function ArticleDisplay({ article, onNewSearch }: ArticleDisplayP
 
             <TabsContent value="trust" className="mt-0">
               <TrustMeter links={article.externalLinks} />
+            </TabsContent>
+
+            <TabsContent value="agent" className="mt-0">
+              <AgentChat 
+                articleTitle={article.title}
+                articleText={article.fullText}
+              />
             </TabsContent>
           </div>
         </Tabs>
