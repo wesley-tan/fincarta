@@ -92,6 +92,14 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     }
   }, [voiceEnabled]);
 
+  // Auto-disable voice when streaming is enabled (streaming doesn't support audio)
+  useEffect(() => {
+    if (streamingEnabled && voiceEnabled) {
+      console.log("Streaming enabled - voice output not available in fast mode");
+      stopCurrentAudio();
+    }
+  }, [streamingEnabled]);
+
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
