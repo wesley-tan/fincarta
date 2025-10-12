@@ -10,8 +10,8 @@
     },
     "dependencies": {
         "@babel/parser": "^7.28.4",
-        "@google/generative-ai": "^0.24.1",
         "@elevenlabs/elevenlabs-js": "^2.18.0",
+        "@google/generative-ai": "^0.24.1",
         "@headlessui/react": "^2.2.9",
         "@heroicons/react": "^2.2.0",
         "@hookform/resolvers": "^5.1.1",
@@ -108,6 +108,7 @@
         "@types/react-dom": "^19",
         "@types/react-syntax-highlighter": "^15.5.13",
         "@types/three": "^0.178.0",
+        "dotenv": "^17.2.3",
         "eslint": "^9.37.0",
         "eslint-config-next": "^15.5.4",
         "tailwindcss": "^4",

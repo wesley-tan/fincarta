@@ -42,6 +42,23 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     scrollToBottom();
   }, [messages]);
 
+  // Helper function to stop current audio
+  const stopCurrentAudio = () => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        // Remove event listeners to prevent them from firing
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
+      } catch (e) {
+        console.error("Error stopping audio:", e);
+      }
+      audioRef.current = null;
+      setIsSpeaking(false);
+    }
+  };
+
   // Play greeting voice on load
   useEffect(() => {
     if (!hasPlayedGreeting.current && voiceEnabled) {
@@ -49,6 +66,20 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
       playGreeting();
     }
   }, [voiceEnabled]);
+
+  // Stop audio when voice is disabled (muted)
+  useEffect(() => {
+    if (!voiceEnabled) {
+      stopCurrentAudio();
+    }
+  }, [voiceEnabled]);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      stopCurrentAudio();
+    };
+  }, []);
 
   const playGreeting = async () => {
     try {
@@ -107,28 +138,43 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     }
   };
 
-  const playAudio = (audioBase64: string) => {
+  const playAudio = async (audioBase64: string) => {
     if (!voiceEnabled) return;
-    
+
     try {
+      // Stop any currently playing audio to prevent overlap
+      stopCurrentAudio();
+
       const audioBlob = new Blob(
         [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
         { type: "audio/mpeg" }
       );
       const audioUrl = URL.createObjectURL(audioBlob);
-      
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      
-      audioRef.current = new Audio(audioUrl);
-      
+
+      const newAudio = new Audio(audioUrl);
+      audioRef.current = newAudio;
+
       // Set speaking state
       setIsSpeaking(true);
-      audioRef.current.onended = () => setIsSpeaking(false);
-      audioRef.current.onerror = () => setIsSpeaking(false);
-      
-      audioRef.current.play();
+
+      newAudio.onended = () => {
+        if (audioRef.current === newAudio) {
+          setIsSpeaking(false);
+        }
+        // Clean up the URL after playback
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      newAudio.onerror = (e) => {
+        console.error("Audio playback error:", e);
+        if (audioRef.current === newAudio) {
+          setIsSpeaking(false);
+        }
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      // Use async play to catch errors
+      await newAudio.play();
     } catch (error) {
       console.error("Error playing audio:", error);
       setIsSpeaking(false);

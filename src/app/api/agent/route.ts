@@ -49,26 +49,66 @@ INSTRUCTIONS:
 
 Answer naturally as if speaking to a friend:`;
 
+      // Use the latest available Gemini models (ordered by preference)
       const candidateModels = [
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro",
+        "gemini-2.0-flash-exp",      // Latest experimental (working)
+        "gemini-1.5-flash-8b",       // Fast model
+        "gemini-1.5-flash",          // Stable fast model
+        "gemini-1.5-pro",            // More capable model
+        "gemini-pro",                // Fallback
       ];
 
       let generated = false;
+      let lastError: any = null;
+      
       for (const modelName of candidateModels) {
         try {
-          const model = genAI.getGenerativeModel({ model: modelName });
+          console.log(`[Agent] Trying model: ${modelName}`);
+          const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            safetySettings: [
+              {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_NONE",
+              },
+              {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_NONE",
+              },
+              {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_NONE",
+              },
+              {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_NONE",
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+          });
+          
           const result = await model.generateContent(prompt);
           const response = await result.response;
           responseText = response.text().trim();
           generated = true;
-          console.log(`[Agent] Gemini response via ${modelName}:`, responseText.substring(0, 100) + "...");
+          console.log(`[Agent] ✓ Success with ${modelName}:`, responseText.substring(0, 100) + "...");
           break;
-        } catch (err) {
-          console.warn(`[Agent] Model ${modelName} failed, trying next...`);
+        } catch (err: any) {
+          lastError = err;
+          console.error(`[Agent] ✗ Model ${modelName} failed:`, err.message || err);
+          if (err.response) {
+            console.error(`[Agent] Error details:`, await err.response.text().catch(() => 'Unable to parse error'));
+          }
         }
+      }
+      
+      if (!generated && lastError) {
+        console.error(`[Agent] All models failed. Last error:`, lastError);
       }
 
       if (!generated) {
@@ -88,29 +128,37 @@ Answer naturally as if speaking to a friend:`;
       responseText = "I'm here to help you understand this financial topic. What would you like to know?";
     }
 
-    // Text-to-speech using ElevenLabs REST API to avoid SDK issues
-    const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // George
-    const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: "POST",
-      headers: {
-        "xi-api-key": elevenLabsKey,
-        "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
-      },
-      body: JSON.stringify({
-        text: responseText,
-        model_id: "eleven_multilingual_v2",
-        output_format: "mp3_44100_128",
-      }),
-    });
+    // Text-to-speech using ElevenLabs REST API (optional - won't fail if TTS fails)
+    let audioBase64 = "";
+    try {
+      const voiceId = "JBFqnCBsd6RMkjVDRZzb"; // George
+      const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: "POST",
+        headers: {
+          "xi-api-key": elevenLabsKey,
+          "Content-Type": "application/json",
+          "Accept": "audio/mpeg",
+        },
+        body: JSON.stringify({
+          text: responseText,
+          model_id: "eleven_multilingual_v2",
+          output_format: "mp3_44100_128",
+        }),
+      });
 
-    if (!ttsRes.ok) {
-      console.error("[Agent] ElevenLabs TTS error:", await ttsRes.text());
+      if (!ttsRes.ok) {
+        const errorText = await ttsRes.text();
+        console.error("[Agent] ElevenLabs TTS error:", errorText);
+      } else {
+        const audioArrayBuffer = await ttsRes.arrayBuffer();
+        audioBase64 = Buffer.from(audioArrayBuffer).toString("base64");
+        console.log("[Agent] Audio generated successfully");
+      }
+    } catch (audioError) {
+      console.error("[Agent] Failed to generate audio (non-fatal):", audioError);
     }
-    const audioArrayBuffer = await ttsRes.arrayBuffer();
-    const audioBase64 = Buffer.from(audioArrayBuffer).toString("base64");
 
-    console.log("[Agent] Response generated successfully with audio");
+    console.log("[Agent] Response generated successfully", audioBase64 ? "with audio" : "without audio");
 
     return NextResponse.json({
       response: responseText,
