@@ -51,11 +51,11 @@ Answer naturally as if speaking to a friend:`;
 
       // Use the latest available Gemini models (ordered by preference)
       const candidateModels = [
-        "gemini-2.0-flash-exp",      // Latest experimental (working)
-        "gemini-1.5-flash-8b",       // Fast model
+        "gemini-2.5-flash",          // Latest Gemini 2.5 (fastest, most capable)
+        "gemini-2.0-flash-exp",      // Experimental 2.0 (working fallback)
         "gemini-1.5-flash",          // Stable fast model
         "gemini-1.5-pro",            // More capable model
-        "gemini-pro",                // Fallback
+        "gemini-pro",                // Legacy fallback
       ];
 
       let generated = false;
