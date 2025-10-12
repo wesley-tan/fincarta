@@ -88,7 +88,7 @@ const goalArticles: Record<string, Article[]> = {
     {
       title: "Understanding Mortgage Types",
       description: "Compare fixed-rate, ARM, FHA, and VA loan options",
-      icon: BookOpen,
+      icon: Home,
       searchQuery: "mortgage types explained"
     }
   ],
@@ -136,7 +136,7 @@ const goalArticles: Record<string, Article[]> = {
     {
       title: "Personal Finance Basics",
       description: "Start your financial journey with essential money management concepts",
-      icon: BookOpen,
+      icon: GraduationCap,
       searchQuery: "personal finance basics"
     },
     {
