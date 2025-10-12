@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Image as ImageIcon, X } from "lucide-react";
+import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Image as ImageIcon, X, Zap, ZapOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
@@ -32,11 +32,14 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [streamingEnabled, setStreamingEnabled] = useState(true);
+  const [streamingText, setStreamingText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hasPlayedGreeting = useRef(false);
+  const isPlayingAudioRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,6 +63,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
       }
       audioRef.current = null;
       setIsSpeaking(false);
+      isPlayingAudioRef.current = false;
     }
   };
 
@@ -145,9 +149,16 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const playAudio = async (audioBase64: string) => {
     if (!voiceEnabled) return;
 
-    try {
-      // Stop any currently playing audio to prevent overlap
+    // Prevent multiple simultaneous audio playback attempts
+    if (isPlayingAudioRef.current) {
+      console.log("Audio already playing, stopping previous audio first");
       stopCurrentAudio();
+      // Wait a tiny bit for cleanup
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    try {
+      isPlayingAudioRef.current = true;
 
       const audioBlob = new Blob(
         [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
@@ -164,6 +175,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
       newAudio.onended = () => {
         if (audioRef.current === newAudio) {
           setIsSpeaking(false);
+          isPlayingAudioRef.current = false;
         }
         // Clean up the URL after playback
         URL.revokeObjectURL(audioUrl);
@@ -173,6 +185,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
         console.error("Audio playback error:", e);
         if (audioRef.current === newAudio) {
           setIsSpeaking(false);
+          isPlayingAudioRef.current = false;
         }
         URL.revokeObjectURL(audioUrl);
       };
@@ -182,6 +195,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     } catch (error) {
       console.error("Error playing audio:", error);
       setIsSpeaking(false);
+      isPlayingAudioRef.current = false;
     }
   };
 
@@ -255,30 +269,93 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
         requestBody.image = currentImage;
       }
 
-      const response = await fetch("/api/agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+      // Use streaming if enabled
+      if (streamingEnabled) {
+        const response = await fetch("/api/agent/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
+        if (!response.ok) {
+          throw new Error("Failed to get response");
+        }
 
-      const data = await response.json();
+        // Add placeholder message for streaming
+        const streamMessageIndex = messages.length + 1;
+        setMessages((prev) => [...prev, {
+          role: "agent",
+          content: "",
+          timestamp: new Date(),
+        }]);
+        setStreamingText("");
 
-      const agentMessage: Message = {
-        role: "agent",
-        content: data.response,
-        timestamp: new Date(),
-      };
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedText = "";
 
-      setMessages((prev) => [...prev, agentMessage]);
-      setConversationId(data.conversationId);
+        while (reader) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      // Play audio response if voice is enabled
-      if (data.audio && voiceEnabled) {
-        playAudio(data.audio);
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.text) {
+                  accumulatedText += data.text;
+                  setMessages((prev) => {
+                    const newMessages = [...prev];
+                    newMessages[streamMessageIndex] = {
+                      role: "agent",
+                      content: accumulatedText,
+                      timestamp: new Date(),
+                    };
+                    return newMessages;
+                  });
+                }
+                if (data.done) {
+                  break;
+                }
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+              } catch (parseError) {
+                console.error("Parse error:", parseError);
+              }
+            }
+          }
+        }
+      } else {
+        // Original non-streaming logic
+        const response = await fetch("/api/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to get response");
+        }
+
+        const data = await response.json();
+
+        const agentMessage: Message = {
+          role: "agent",
+          content: data.response,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, agentMessage]);
+        setConversationId(data.conversationId);
+
+        // Play audio response if voice is enabled
+        if (data.audio && voiceEnabled) {
+          playAudio(data.audio);
+        }
       }
     } catch (error) {
       const errorMessage: Message = {
@@ -299,6 +376,17 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
         <span className="encarta-window-title">🤖 AI Voice Assistant</span>
         <div className="flex items-center gap-2 text-xs text-white px-2">
           <button
+            onClick={() => setStreamingEnabled(!streamingEnabled)}
+            className="flex items-center gap-1 hover:bg-white/20 px-2 py-1 rounded"
+            title={streamingEnabled ? "Disable streaming" : "Enable streaming"}
+          >
+            {streamingEnabled ? (
+              <Zap className="w-3 h-3" />
+            ) : (
+              <ZapOff className="w-3 h-3" />
+            )}
+          </button>
+          <button
             onClick={() => setVoiceEnabled(!voiceEnabled)}
             className="flex items-center gap-1 hover:bg-white/20 px-2 py-1 rounded"
             title={voiceEnabled ? "Disable voice" : "Enable voice"}
@@ -310,8 +398,8 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
             )}
           </button>
           <span className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-blue-400' : 'bg-green-400'} animate-pulse`} />
-            {isSpeaking ? "Speaking..." : "Online"}
+            <div className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-blue-400' : streamingEnabled ? 'bg-yellow-400' : 'bg-green-400'} animate-pulse`} />
+            {isSpeaking ? "Speaking..." : streamingEnabled ? "Fast Mode" : "Online"}
           </span>
         </div>
       </div>
