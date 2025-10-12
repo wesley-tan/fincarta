@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Image as ImageIcon, X, Zap, ZapOff } from "lucide-react";
+import { Send, Bot, User, Loader2, Mic, Volume2, VolumeX, Image as ImageIcon, X, Zap, ZapOff, FileText, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
@@ -9,6 +9,9 @@ interface Message {
   content: string;
   timestamp: Date;
   image?: string; // Base64 image data
+  images?: string[]; // Multiple images
+  pdfText?: string; // Extracted PDF text
+  pdfName?: string; // PDF filename
 }
 
 interface AgentChatProps {
@@ -32,12 +35,17 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadedPdf, setUploadedPdf] = useState<{text: string; name: string} | null>(null);
   const [streamingEnabled, setStreamingEnabled] = useState(true);
   const [streamingText, setStreamingText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const multiImageInputRef = useRef<HTMLInputElement>(null);
   const hasPlayedGreeting = useRef(false);
   const isPlayingAudioRef = useRef(false);
 
@@ -251,31 +259,148 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
     }
   };
 
+  // Handle multiple image uploads
+  const handleMultipleImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const validFiles = Array.from(files).filter(file => {
+      if (!file.type.startsWith('image/')) {
+        alert(`${file.name} is not an image file`);
+        return false;
+      }
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit per image
+        alert(`${file.name} is too large. Maximum size is 10MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+    if (validFiles.length > 5) {
+      alert('Maximum 5 images at once');
+      return;
+    }
+
+    try {
+      const imagePromises = validFiles.map(file => {
+        return new Promise<{preview: string; base64: string}>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            const base64 = result.split(',')[1];
+            resolve({ preview: result, base64 });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const results = await Promise.all(imagePromises);
+      setImagePreviews(results.map(r => r.preview));
+      setUploadedImages(results.map(r => r.base64));
+    } catch (error) {
+      console.error('Error processing images:', error);
+      alert('Failed to process images');
+    }
+  };
+
+  const removeMultipleImages = () => {
+    setUploadedImages([]);
+    setImagePreviews([]);
+    if (multiImageInputRef.current) {
+      multiImageInputRef.current.value = "";
+    }
+  };
+
+  // Handle PDF upload
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file');
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) { // 20MB limit
+      alert('PDF file is too large. Maximum size is 20MB');
+      return;
+    }
+
+    try {
+      // Load pdfjs-dist
+      const pdfjsLib = await import('pdfjs-dist');
+      
+      // Set worker
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let fullText = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += `\n\n--- Page ${pageNum} ---\n${pageText}`;
+      }
+
+      setUploadedPdf({ text: fullText.trim(), name: file.name });
+    } catch (error) {
+      console.error('Error processing PDF:', error);
+      alert('Failed to process PDF. Please try again.');
+    }
+  };
+
+  const removePdf = () => {
+    setUploadedPdf(null);
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!input.trim() && !uploadedImage) || loading) return;
+    if ((!input.trim() && !uploadedImage && uploadedImages.length === 0 && !uploadedPdf) || loading) return;
+
+    // Determine content description
+    let contentDescription = input.trim();
+    if (!contentDescription) {
+      if (uploadedPdf) contentDescription = `📄 [PDF: ${uploadedPdf.name}]`;
+      else if (uploadedImages.length > 0) contentDescription = `🖼️ [${uploadedImages.length} images uploaded]`;
+      else if (uploadedImage) contentDescription = "📸 [Image uploaded]";
+    }
 
     const userMessage: Message = {
       role: "user",
-      content: input.trim() || "📸 [Image uploaded]",
+      content: contentDescription,
       timestamp: new Date(),
       image: imagePreview || undefined,
+      images: imagePreviews.length > 0 ? imagePreviews : undefined,
+      pdfName: uploadedPdf?.name,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     const currentInput = input.trim();
     const currentImage = uploadedImage;
+    const currentImages = uploadedImages;
+    const currentPdf = uploadedPdf;
+    
     setInput("");
     setUploadedImage(null);
     setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    setUploadedImages([]);
+    setImagePreviews([]);
+    setUploadedPdf(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (multiImageInputRef.current) multiImageInputRef.current.value = "";
+    if (pdfInputRef.current) pdfInputRef.current.value = "";
     setLoading(true);
 
     try {
       const requestBody: any = {
-        message: currentInput || "Analyze this image in the context of the article.",
+        message: currentInput || "Analyze the uploaded content in the context of the article.",
         articleContext: {
           title: articleTitle,
           text: articleText,
@@ -285,6 +410,15 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
 
       if (currentImage) {
         requestBody.image = currentImage;
+      }
+      
+      if (currentImages.length > 0) {
+        requestBody.images = currentImages;
+      }
+      
+      if (currentPdf) {
+        requestBody.pdfText = currentPdf.text;
+        requestBody.pdfName = currentPdf.name;
       }
 
       // Use streaming if enabled
@@ -466,6 +600,24 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
                       />
                     </div>
                   )}
+                  {message.images && message.images.length > 0 && (
+                    <div className="mb-2 grid grid-cols-2 gap-2">
+                      {message.images.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Upload ${idx + 1}`}
+                          className="max-w-full rounded border-2 border-white/50"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {message.pdfName && (
+                    <div className="mb-2 flex items-center gap-2 bg-blue-100 p-2 rounded">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <span className="text-xs text-blue-800">{message.pdfName}</span>
+                    </div>
+                  )}
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-1 px-1">
@@ -497,7 +649,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
       {/* Input */}
       <div className="encarta-status-bar">
         <form onSubmit={handleSubmit} className="flex flex-col gap-2 p-2 w-full">
-          {/* Image Preview */}
+          {/* Single Image Preview */}
           {imagePreview && (
             <div className="relative inline-block">
               <img
@@ -510,6 +662,49 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
                 onClick={removeImage}
                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                 title="Remove image"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Multiple Images Preview */}
+          {imagePreviews.length > 0 && (
+            <div className="flex items-start gap-2 bg-blue-50 p-2 rounded border-2 border-blue-300">
+              <div className="flex gap-2 flex-wrap flex-1">
+                {imagePreviews.map((preview, idx) => (
+                  <img
+                    key={idx}
+                    src={preview}
+                    alt={`Preview ${idx + 1}`}
+                    className="max-h-16 rounded border-2 border-blue-400"
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={removeMultipleImages}
+                className="bg-red-500 text-white rounded-full p-1 hover:bg-red-600 flex-shrink-0"
+                title="Remove all images"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* PDF Preview */}
+          {uploadedPdf && (
+            <div className="flex items-center justify-between gap-2 bg-green-50 p-2 rounded border-2 border-green-400">
+              <div className="flex items-center gap-2 flex-1">
+                <FileText className="w-4 h-4 text-green-600" />
+                <span className="text-xs text-green-800 truncate">{uploadedPdf.name}</span>
+                <span className="text-xs text-gray-600">({Math.round(uploadedPdf.text.length / 1000)}KB text)</span>
+              </div>
+              <button
+                type="button"
+                onClick={removePdf}
+                className="bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                title="Remove PDF"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -534,6 +729,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
                 }}
               />
             </div>
+            {/* Hidden file inputs */}
             <input
               ref={fileInputRef}
               type="file"
@@ -541,20 +737,55 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
               onChange={handleImageUpload}
               className="hidden"
             />
+            <input
+              ref={multiImageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleMultipleImagesUpload}
+              className="hidden"
+            />
+            <input
+              ref={pdfInputRef}
+              type="file"
+              accept="application/pdf"
+              onChange={handlePdfUpload}
+              className="hidden"
+            />
+            
+            {/* Upload buttons */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="encarta-button px-3 flex items-center gap-2"
-              title="Upload image"
+              className="encarta-button px-3 flex items-center gap-1"
+              title="Upload single image"
             >
               <ImageIcon className="w-4 h-4" />
             </button>
             <button
               type="button"
+              onClick={() => multiImageInputRef.current?.click()}
+              disabled={loading}
+              className="encarta-button px-3 flex items-center gap-1"
+              title="Upload multiple images (max 5)"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => pdfInputRef.current?.click()}
+              disabled={loading}
+              className="encarta-button px-3 flex items-center gap-1"
+              title="Upload PDF document"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
               onClick={isRecording ? stopRecording : startRecording}
               disabled={loading}
-              className={`encarta-button px-3 flex items-center gap-2 ${
+              className={`encarta-button px-3 flex items-center gap-1 ${
                 isRecording ? "bg-red-500 text-white" : ""
               }`}
               title={isRecording ? "Stop recording" : "Start voice input"}
@@ -563,7 +794,7 @@ export default function AgentChat({ articleTitle, articleText }: AgentChatProps)
             </button>
             <button
               type="submit"
-              disabled={loading || (!input.trim() && !uploadedImage)}
+              disabled={loading || (!input.trim() && !uploadedImage && uploadedImages.length === 0 && !uploadedPdf)}
               className="encarta-button px-4 flex items-center gap-2"
             >
               <Send className="w-4 h-4" />

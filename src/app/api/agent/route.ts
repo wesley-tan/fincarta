@@ -5,11 +5,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, articleContext, conversationId, image } = await request.json();
+    const { message, articleContext, conversationId, image, images, pdfText, pdfName } = await request.json();
 
     console.log("[Agent] Processing message:", message);
     console.log("[Agent] Article context:", articleContext?.title || "None");
     console.log("[Agent] Image provided:", image ? "Yes" : "No");
+    console.log("[Agent] Multiple images provided:", images ? `Yes (${images.length})` : "No");
+    console.log("[Agent] PDF provided:", pdfText ? `Yes (${pdfName})` : "No");
 
     if (!message) {
       return NextResponse.json(
@@ -33,40 +35,24 @@ export async function POST(request: NextRequest) {
     let responseText = "";
     if (articleContext) {
       const articleExcerpt = articleContext.text.substring(0, 3000);
-      const textPrompt = image 
-        ? `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
+      
+      // Build prompt based on what content is provided
+      let textPrompt = `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
 
 ARTICLE CONTEXT:
 ${articleExcerpt}
+`;
 
-The user has uploaded an image and asked: ${message}
-
-INSTRUCTIONS:
-- Analyze the image in the context of the article
-- If it's a financial chart, graph, or document, explain what you see
-- Connect your analysis to the article topic when relevant
-- Be conversational, warm, and encouraging
-- Keep response under 5 sentences
-- Use simple language appropriate for someone learning about finance
-- Don't use markdown or special formatting
-
-Answer naturally as if speaking to a friend:`
-        : `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext.title}".
-
-ARTICLE CONTEXT:
-${articleExcerpt}
-
-USER QUESTION: ${message}
-
-INSTRUCTIONS:
-- Answer based on the article content above
-- Be conversational, warm, and encouraging
-- Keep response under 4 sentences for natural speech
-- If the article doesn't cover it, say so briefly and offer what you know
-- Use simple language appropriate for someone learning about finance
-- Don't use markdown or special formatting
-
-Answer naturally as if speaking to a friend:`;
+      if (pdfText) {
+        const pdfExcerpt = pdfText.substring(0, 5000);
+        textPrompt += `\nThe user has uploaded a PDF document (${pdfName}). Here's the extracted text:\n\n${pdfExcerpt}${pdfText.length > 5000 ? '\n...(truncated)' : ''}\n\nUser's question: ${message}\n\nINSTRUCTIONS:\n- Analyze the PDF content in the context of the article\n- Explain key financial information you find\n- Connect it to the article topic when relevant\n- Be conversational, warm, and encouraging\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+      } else if (images && images.length > 0) {
+        textPrompt += `\nThe user has uploaded ${images.length} images and asked: ${message}\n\nINSTRUCTIONS:\n- Analyze all ${images.length} images in the context of the article\n- Compare and contrast what you see across the images\n- If they're financial charts, graphs, or documents, explain what you see\n- Connect your analysis to the article topic when relevant\n- Be conversational, warm, and encouraging\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+      } else if (image) {
+        textPrompt += `\nThe user has uploaded an image and asked: ${message}\n\nINSTRUCTIONS:\n- Analyze the image in the context of the article\n- If it's a financial chart, graph, or document, explain what you see\n- Connect your analysis to the article topic when relevant\n- Be conversational, warm, and encouraging\n- Keep response under 5 sentences\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+      } else {
+        textPrompt += `\nUSER QUESTION: ${message}\n\nINSTRUCTIONS:\n- Answer based on the article content above\n- Be conversational, warm, and encouraging\n- Keep response under 4 sentences for natural speech\n- If the article doesn't cover it, say so briefly and offer what you know\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+      }
 
       // Use the latest available Gemini models (ordered by preference)
       const candidateModels = [
@@ -111,10 +97,25 @@ Answer naturally as if speaking to a friend:`;
             },
           });
           
-          // Handle multimodal input (text + image) or text-only
+          // Handle multimodal input (text + images/PDF) or text-only
           let result;
-          if (image) {
-            console.log(`[Agent] Processing with image (multimodal)`);
+          if (images && images.length > 0) {
+            console.log(`[Agent] Processing with ${images.length} images (multimodal)`);
+            const content: any[] = [];
+            // Add all images
+            images.forEach((img: string, idx: number) => {
+              content.push({
+                inlineData: {
+                  data: img,
+                  mimeType: "image/png"
+                }
+              });
+            });
+            // Add text prompt
+            content.push(textPrompt);
+            result = await model.generateContent(content);
+          } else if (image) {
+            console.log(`[Agent] Processing with single image (multimodal)`);
             result = await model.generateContent([
               {
                 inlineData: {
@@ -125,6 +126,7 @@ Answer naturally as if speaking to a friend:`;
               textPrompt
             ]);
           } else {
+            // PDF text is already included in textPrompt, so just send text
             result = await model.generateContent(textPrompt);
           }
           

@@ -7,47 +7,36 @@ export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
   
   try {
-    const { message, articleContext, image } = await request.json();
+    const { message, articleContext, image, images, pdfText, pdfName } = await request.json();
 
     console.log("[Agent Stream] Processing message:", message);
     console.log("[Agent Stream] Image provided:", image ? "Yes" : "No");
+    console.log("[Agent Stream] Multiple images provided:", images ? `Yes (${images.length})` : "No");
+    console.log("[Agent Stream] PDF provided:", pdfText ? `Yes (${pdfName})` : "No");
 
     if (!message) {
       return new Response("Message is required", { status: 400 });
     }
 
     const articleExcerpt = articleContext?.text?.substring(0, 3000) || "";
-    const textPrompt = image 
-      ? `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext?.title}".
+    
+    // Build prompt based on content type
+    let textPrompt = `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext?.title}".
 
 ARTICLE CONTEXT:
 ${articleExcerpt}
+`;
 
-The user has uploaded an image and asked: ${message}
-
-INSTRUCTIONS:
-- Analyze the image in the context of the article
-- If it's a financial chart, graph, or document, explain what you see
-- Connect your analysis to the article topic when relevant
-- Be conversational, warm, and encouraging
-- Use simple language appropriate for someone learning about finance
-- Don't use markdown or special formatting
-
-Answer naturally as if speaking to a friend:`
-      : `You are a friendly, knowledgeable financial education assistant helping someone understand an article about "${articleContext?.title}".
-
-ARTICLE CONTEXT:
-${articleExcerpt}
-
-USER QUESTION: ${message}
-
-INSTRUCTIONS:
-- Answer based on the article content above
-- Be conversational, warm, and encouraging
-- Use simple language appropriate for someone learning about finance
-- Don't use markdown or special formatting
-
-Answer naturally as if speaking to a friend:`;
+    if (pdfText) {
+      const pdfExcerpt = pdfText.substring(0, 5000);
+      textPrompt += `\nThe user has uploaded a PDF document (${pdfName}). Here's the extracted text:\n\n${pdfExcerpt}${pdfText.length > 5000 ? '\n...(truncated)' : ''}\n\nUser's question: ${message}\n\nINSTRUCTIONS:\n- Analyze the PDF content in the context of the article\n- Explain key financial information you find\n- Connect it to the article topic when relevant\n- Be conversational, warm, and encouraging\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+    } else if (images && images.length > 0) {
+      textPrompt += `\nThe user has uploaded ${images.length} images and asked: ${message}\n\nINSTRUCTIONS:\n- Analyze all ${images.length} images in the context of the article\n- Compare and contrast what you see across the images\n- If they're financial charts, graphs, or documents, explain what you see\n- Connect your analysis to the article topic when relevant\n- Be conversational, warm, and encouraging\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+    } else if (image) {
+      textPrompt += `\nThe user has uploaded an image and asked: ${message}\n\nINSTRUCTIONS:\n- Analyze the image in the context of the article\n- If it's a financial chart, graph, or document, explain what you see\n- Connect your analysis to the article topic when relevant\n- Be conversational, warm, and encouraging\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+    } else {
+      textPrompt += `\nUSER QUESTION: ${message}\n\nINSTRUCTIONS:\n- Answer based on the article content above\n- Be conversational, warm, and encouraging\n- Use simple language appropriate for someone learning about finance\n- Don't use markdown or special formatting\n\nAnswer naturally as if speaking to a friend:`;
+    }
 
     // Try models in order
     const candidateModels = [
@@ -78,14 +67,30 @@ Answer naturally as if speaking to a friend:`;
               },
             });
             
-            // Handle multimodal input
+            // Handle multimodal input (text + images/PDF) or text-only
             let result;
-            if (image) {
+            if (images && images.length > 0) {
+              console.log(`[Agent Stream] Processing with ${images.length} images (multimodal)`);
+              const content: any[] = [];
+              // Add all images
+              images.forEach((img: string) => {
+                content.push({
+                  inlineData: {
+                    data: img,
+                    mimeType: "image/png"
+                  }
+                });
+              });
+              // Add text prompt
+              content.push(textPrompt);
+              result = await model.generateContentStream(content);
+            } else if (image) {
               result = await model.generateContentStream([
                 { inlineData: { data: image, mimeType: "image/png" } },
                 textPrompt
               ]);
             } else {
+              // PDF text is already included in textPrompt, so just send text
               result = await model.generateContentStream(textPrompt);
             }
             

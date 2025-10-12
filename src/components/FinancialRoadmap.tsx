@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Check, Lock, Star, BookOpen, Trophy, Sparkles, TrendingUp } from "lucide-react";
+import { Check, Lock, Star, BookOpen, Trophy } from "lucide-react";
 
 interface Step {
   id: string;
@@ -17,20 +17,9 @@ interface Step {
   stars: number;
 }
 
-interface Recommendation {
-  topic: string;
-  reason: string;
-  difficulty: string;
-  relevance: string;
-}
-
 export default function FinancialRoadmap() {
   const router = useRouter();
   const [progress, setProgress] = useState<Record<string, { completed: boolean; stars: number; articlesRead: string[] }>>({});
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [userLevel, setUserLevel] = useState<string>("beginner");
-  const [loadingRecs, setLoadingRecs] = useState(false);
-  const [showRecommendations, setShowRecommendations] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("finance-roadmap-progress");
@@ -162,47 +151,6 @@ export default function FinancialRoadmap() {
     }
   };
 
-  const getRecommendations = async () => {
-    setLoadingRecs(true);
-    try {
-      const articlesRead = JSON.parse(localStorage.getItem("articles-read") || "[]");
-      const lastSearches = JSON.parse(localStorage.getItem("last-searches") || "[]");
-
-      const response = await fetch("/api/recommendations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currentStep: currentStep.id,
-          progress,
-          articlesRead,
-          lastSearches: lastSearches.slice(0, 5),
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to get recommendations");
-
-      const data = await response.json();
-      setRecommendations(data.recommendations || []);
-      setUserLevel(data.userLevel || "beginner");
-      setShowRecommendations(true);
-    } catch (error) {
-      console.error("Recommendation error:", error);
-    } finally {
-      setLoadingRecs(false);
-    }
-  };
-
-  const handleRecommendationClick = (topic: string) => {
-    trackArticleRead(topic);
-    
-    // Track search
-    const lastSearches = JSON.parse(localStorage.getItem("last-searches") || "[]");
-    lastSearches.unshift(topic);
-    localStorage.setItem("last-searches", JSON.stringify(lastSearches.slice(0, 20)));
-    
-    router.push(`/?search=${encodeURIComponent(topic)}`);
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto py-8">
       {/* Progress Header */}
@@ -237,77 +185,8 @@ export default function FinancialRoadmap() {
             </span>
           </div>
 
-          {/* User Level Badge */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-bold uppercase">
-                Level: {userLevel}
-              </span>
-            </div>
-            
-            <button
-              onClick={getRecommendations}
-              disabled={loadingRecs}
-              className="encarta-button text-xs flex items-center gap-2"
-            >
-              <Sparkles className="w-3 h-3" />
-              {loadingRecs ? "Analyzing..." : "Get AI Recommendations"}
-            </button>
-          </div>
         </div>
       </div>
-
-      {/* AI Recommendations Panel */}
-      {showRecommendations && recommendations.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="encarta-window mb-8"
-        >
-          <div className="encarta-window-titlebar">
-            <span className="encarta-window-title">✨ Personalized Recommendations</span>
-            <button
-              onClick={() => setShowRecommendations(false)}
-              className="text-white hover:text-yellow-300 text-lg"
-            >
-              ×
-            </button>
-          </div>
-          <div className="p-6 bg-white">
-            <p className="text-xs text-gray-600 mb-4">
-              Based on your progress, we recommend these articles:
-            </p>
-            <div className="space-y-3">
-              {recommendations.map((rec, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleRecommendationClick(rec.topic)}
-                  className="p-4 border-2 border-blue-300 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-blue-600 text-white font-bold text-xs">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-sm mb-1">{rec.topic}</h4>
-                      <p className="text-xs text-gray-700 mb-2">{rec.reason}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-white text-xs border border-blue-400">
-                          {rec.difficulty}
-                        </span>
-                        <span className="text-xs text-gray-600">
-                          📚 {rec.relevance}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Roadmap Steps */}
       <div className="space-y-6">
