@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, TrendingUp, DollarSign, PiggyBank, Home, GraduationCap, Shield } from "lucide-react";
+import { TrendingUp, DollarSign, PiggyBank, Home, GraduationCap, Shield } from "lucide-react";
 
 interface Article {
   title: string;
@@ -209,8 +209,8 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
             <span className="encarta-window-title">✨ YOUR PERSONALIZED PATH</span>
           </div>
           <div className="p-8 bg-white text-center">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 text-[#0066CC] animate-pulse" />
-            <p className="text-sm text-black">Loading your recommendations...</p>
+            <div className="text-5xl mb-4">⏳</div>
+            <p className="text-xs text-black">Loading your recommendations...</p>
           </div>
         </div>
       </div>
@@ -231,12 +231,12 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
           {/* Header */}
           <div className="mb-6 p-4 bg-[#DFDFDF] border-2 border-[#808080]">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-6 h-6 text-[#0066CC] flex-shrink-0 mt-1" />
+              <span className="text-2xl flex-shrink-0">📚</span>
               <div>
-                <h3 className="font-bold text-base mb-2 text-black">
+                <h3 className="font-bold text-sm mb-2 text-black">
                   Recommended Articles for You
                 </h3>
-                <p className="text-sm text-black">
+                <p className="text-xs text-black">
                   Based on your goal{goal && ` to ${goalTitles[goal]?.toLowerCase()}`}, we've selected these articles to help you get started.
                 </p>
               </div>
@@ -263,11 +263,11 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
                     </span>
                   </div>
                   <div className="p-4 bg-white">
-                    <p className="text-sm text-black mb-3 leading-relaxed">
+                    <p className="text-xs text-black mb-3 leading-relaxed">
                       {article.description}
                     </p>
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#0066CC]">
-                      <BookOpen className="w-4 h-4" />
+                    <div className="flex items-center gap-1 text-xs font-bold text-[#0066CC]">
+                      <span>📖</span>
                       Click to Read Article →
                     </div>
                   </div>
@@ -278,7 +278,7 @@ export default function PersonalizedTrack({ userId }: { userId: string }) {
 
           {/* Footer */}
           <div className="mt-6 p-4 bg-[#DFDFDF] border-2 border-[#808080] text-center">
-            <p className="text-sm text-black">
+            <p className="text-xs text-black">
               💡 <strong>Tip:</strong> Click any article to start learning. Each article will open with full AI assistant support!
             </p>
           </div>
