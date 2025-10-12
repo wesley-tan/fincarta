@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import EncartaLogo from "@/components/EncartaLogo";
 import BubbleBackground from "@/components/BubbleBackground";
@@ -21,7 +21,7 @@ interface ArticleData {
   financeMessage?: string;
 }
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ export default function Home() {
   // Handle search from URL params (when coming from roadmap)
   useEffect(() => {
     const searchQuery = searchParams.get('search');
-    if (searchQuery) {
+    if (searchQuery && searchQuery.trim() !== '') {
       handleSearch(searchQuery);
     }
   }, [searchParams]);
@@ -85,7 +85,7 @@ export default function Home() {
         <header className="pt-8 pb-6 px-4">
           <div className="container mx-auto">
             <div className="flex justify-center mb-6">
-              <EncartaLogo />
+              <EncartaLogo handleSearch={handleSearch} />
             </div>
             
             {/* Navigation Tabs */}
@@ -209,5 +209,19 @@ export default function Home() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen encarta-bg relative overflow-hidden flex items-center justify-center">
+        <div className="encarta-window max-w-2xl mx-auto">
+          <CDRomLoader />
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

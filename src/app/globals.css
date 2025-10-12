@@ -132,6 +132,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'MS Sans Serif', Arial, sans-serif;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
   
   .encarta-bg {
